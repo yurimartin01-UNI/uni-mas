@@ -1,0 +1,75 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<XMLDB PATH="local/unimas/db" VERSION="20260417" COMMENT="XMLDB file for Moodle local_unimas"
+    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+    xsi:noNamespaceSchemaLocation="../../../lib/xmldb/xmldb.xsd"
+>
+  <TABLES>
+    <TABLE NAME="local_unimas_indicators" COMMENT="Stores weekly IS snapshots for students">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="Course ID in Moodle"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="User ID in Moodle"/>
+        <FIELD NAME="week" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0" COMMENT="Course week number"/>
+        <FIELD NAME="is_value" TYPE="number" LENGTH="10" NOTNULL="true" DECIMALS="5" COMMENT="Indicator of Success value"/>
+        <FIELD NAME="comp_activity" TYPE="number" LENGTH="10" NOTNULL="true" DECIMALS="5" COMMENT="Activity component of IS"/>
+        <FIELD NAME="comp_grades" TYPE="number" LENGTH="10" NOTNULL="true" DECIMALS="5" COMMENT="Grades component of IS"/>
+        <FIELD NAME="comp_submissions" TYPE="number" LENGTH="10" NOTNULL="true" DECIMALS="5" COMMENT="Submissions component of IS"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course_user_week" UNIQUE="true" FIELDS="courseid, userid, week"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_unimas_actions" COMMENT="Stores interventions recorded by teachers">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="authorid" TYPE="int" LENGTH="10" NOTNULL="true" COMMENT="ID of the teacher who recorded the action"/>
+        <FIELD NAME="action" TYPE="char" LENGTH="255" NOTNULL="true" COMMENT="Selected action from dropdown"/>
+        <FIELD NAME="note" TYPE="text" NOTNULL="false" COMMENT="Optional note"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+    </TABLE>
+
+    <TABLE NAME="local_unimas_context" COMMENT="Stores qualitative context for students">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="userid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="context_text" TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course_user" UNIQUE="true" FIELDS="courseid, userid"/>
+      </INDEXES>
+    </TABLE>
+
+    <TABLE NAME="local_unimas_ai_cache" COMMENT="Caches AI recommendations for courses and students">
+      <FIELDS>
+        <FIELD NAME="id" TYPE="int" LENGTH="10" NOTNULL="true" SEQUENCE="true"/>
+        <FIELD NAME="courseid" TYPE="int" LENGTH="10" NOTNULL="true"/>
+        <FIELD NAME="week" TYPE="int" LENGTH="4" NOTNULL="true" DEFAULT="0"/>
+        <FIELD NAME="student_id" TYPE="int" LENGTH="10" NOTNULL="false" COMMENT="Null if it's a global course recommendation"/>
+        <FIELD NAME="recommendation" TYPE="text" NOTNULL="true"/>
+        <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
+      </FIELDS>
+      <KEYS>
+        <KEY NAME="primary" TYPE="primary" FIELDS="id"/>
+      </KEYS>
+      <INDEXES>
+        <INDEX NAME="course_week_student" UNIQUE="true" FIELDS="courseid, week, student_id"/>
+      </INDEXES>
+    </TABLE>
+  </TABLES>
+</XMLDB>

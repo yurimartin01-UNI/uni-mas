@@ -1,0 +1,354 @@
+{
+  "es": {
+    "header": {
+      "title": "Panel de Seguimiento Estudiantil (Uni+)",
+      "refresh_btn": "Analizar y Refrescar Agente"
+    },
+    "filters": {
+      "label": "Seguimiento activo:",
+      "crit": "Prioritarios",
+      "aten": "En atención",
+      "norm": "En seguimiento normal",
+      "nodata": "Sin actividad registrada"
+    },
+    "nav": {
+      "dashboard": "Panel",
+      "survey": "Carga Formulario Estudiantil"
+    },
+    "search": {
+      "placeholder": "Escribe el nombre del estudiante para filtrar rápida..."
+    },
+    "table": {
+      "student": "Estudiante",
+      "sort_az": "Sort A-Z",
+      "is": "Indicador Éxito (IS)",
+      "level": "Nivel",
+      "ai_rec": "Recomendación Agente AI",
+      "evolution": "Evolución",
+      "detail": "Detalle",
+      "close": "Cerrar",
+      "no_info": "Sin información"
+    },
+    "badges": {
+      "crit": "Prioritario",
+      "aten": "Atención",
+      "norm": "Normal",
+      "nodata": "Sin información"
+    },
+    "detail_panel": {
+      "is_breakdown": "Desglose del IS — Sem.",
+      "comp_lms": "Actividad LMS (40%)",
+      "comp_grades": "Rendimiento (35%)",
+      "comp_submissions": "Entregas (25%)",
+      "no_perf_info": "No hay información suficiente para calcular el comportamiento (Rendimiento).",
+      "context_title": "Contexto declarado (Encuesta de Materia)",
+      "no_context": "Sin contexto registrado.",
+      "ai_report_title": "INFORME PEDAGÓGICO DEL AGENTE UNI+",
+      "regenerate_tooltip": "Regenerar Informe",
+      "ai_analyzing": "Agente UNI+ analizando perfil...",
+      "ai_prompt_manual": "Pulsa el botón para generar una recomendación personalizada.",
+      "ai_gen_btn": "Generar Informe UNI+",
+      "actions_title": "Registrar acción de seguimiento",
+      "history_title": "Historial de IS"
+    },
+    "followup_form": {
+      "select_action": "Seleccionar acción...",
+      "action_email": "Contactado por correo",
+      "action_meeting": "Cita presencial agendada",
+      "action_welfare": "Derivado a bienestar",
+      "action_other": "Otro",
+      "notes_placeholder": "Notas internas...",
+      "save_btn": "Guardar acción",
+      "saving_btn": "Guardando...",
+      "success_msg": "¡Acción guardada con éxito!",
+      "error_select": "Por favor, selecciona una acción primero.",
+      "week": "Semana"
+    },
+    "config_modal": {
+      "title": "Configuración del Agente de IA",
+      "provider": "Proveedor de IA",
+      "key": "API Key",
+      "model": "Modelo Específico",
+      "base_url": "Base URL (Opcional)",
+      "help_url": "Solo para proveedores personalizados o modelos locales.",
+      "save_btn": "Guardar Configuración",
+      "close_btn": "Cerrar"
+    },
+    "survey_modal": {
+      "title": "Carga de Formulario Estudiantil",
+      "upload_hint": "Arrastra tu archivo Excel aquí o haz clic para buscarlo",
+      "process_btn": "Previsualizar cambios",
+      "close_btn": "Cerrar"
+    },
+    "survey_questions": {
+      "q1": "¿Qué destacarías del diseño de esta materia?",
+      "q2": "¿Qué aspectos de esta materia son los que te resultan más difíciles de resolver?",
+      "q3": "¿Qué necesitas para avanzar en esta materia?",
+      "q4": "¿Quieres que el/la docente se ponga en contacto contigo?"
+    }
+  },
+  "en": {
+    "header": {
+      "title": "Student Support Dashboard (Uni+)",
+      "refresh_btn": "Analyze and refresh agent"
+    },
+    "filters": {
+      "label": "Active monitoring:",
+      "crit": "High priority",
+      "aten": "Needs attention",
+      "norm": "Normal follow-up",
+      "nodata": "No activity recorded"
+    },
+    "nav": {
+      "dashboard": "Dashboard",
+      "survey": "Upload student survey"
+    },
+    "search": {
+      "placeholder": "Type student name for quick filtering..."
+    },
+    "table": {
+      "student": "Student",
+      "sort_az": "Sort A-Z",
+      "is": "Success Indicator (SI)",
+      "level": "Level",
+      "ai_rec": "AI agent recommendation",
+      "evolution": "Evolution",
+      "detail": "Detail",
+      "close": "Close",
+      "no_info": "No information"
+    },
+    "badges": {
+      "crit": "High priority",
+      "aten": "Attention",
+      "norm": "Normal",
+      "nodata": "No information"
+    },
+    "detail_panel": {
+      "is_breakdown": "SI Breakdown — Week",
+      "comp_lms": "LMS Activity (40%)",
+      "comp_grades": "Performance (35%)",
+      "comp_submissions": "Submissions (25%)",
+      "no_perf_info": "Insufficient information to calculate performance behavior",
+      "context_title": "Declared context (subject survey)",
+      "no_context": "No recorded context",
+      "ai_report_title": "UNI+ AGENT PEDAGOGICAL REPORT",
+      "regenerate_tooltip": "Regenerate report",
+      "ai_analyzing": "UNI+ Agent analyzing profile...",
+      "ai_prompt_manual": "Press the button to generate a personalized recommendation",
+      "ai_gen_btn": "Generate UNI+ Report",
+      "actions_title": "Record follow-up action",
+      "history_title": "SI History"
+    },
+    "followup_form": {
+      "select_action": "Select action...",
+      "action_email": "Contacted by email",
+      "action_meeting": "Scheduled in-person meeting",
+      "action_welfare": "Referred to welfare office",
+      "action_other": "Other",
+      "notes_placeholder": "Internal notes...",
+      "save_btn": "Save action",
+      "saving_btn": "Saving...",
+      "success_msg": "Action saved successfully!",
+      "error_select": "Please select an action first",
+      "week": "Week"
+    },
+    "config_modal": {
+      "title": "AI Agent Configuration",
+      "provider": "AI provider",
+      "key": "API Key",
+      "model": "Specific model",
+      "base_url": "Base URL (Optional)",
+      "help_url": "Only for custom providers or local models",
+      "save_btn": "Save configuration",
+      "close_btn": "Close"
+    },
+    "survey_modal": {
+      "title": "Student survey upload",
+      "upload_hint": "Drag your Excel file here or click to browse",
+      "process_btn": "Preview changes",
+      "close_btn": "Close"
+    },
+    "survey_questions": {
+      "q1": "What would you highlight about the course design?",
+      "q2": "What aspects of this course do you find most difficult to resolve?",
+      "q3": "What do you need to advance in this course?",
+      "q4": "Would you like the teacher to contact you?"
+    }
+  },
+  "pt-br": {
+    "header": {
+      "title": "Dashboard de Acompanhamento Estudantil (Uni+)",
+      "refresh_btn": "Analisar e Atualizar Agente"
+    },
+    "filters": {
+      "label": "Monitoramento",
+      "crit": "Prioritários",
+      "aten": "Em atenção",
+      "norm": "Em acompanhamento normal",
+      "nodata": "Sem atividade registrada"
+    },
+    "nav": {
+      "dashboard": "Painel",
+      "survey": "Carregar Formulário Estudantil"
+    },
+    "search": {
+      "placeholder": "Digite o nome do estudante para filtrar..."
+    },
+    "table": {
+      "student": "Estudante",
+      "sort_az": "Sort A-Z",
+      "is": "Indicador de Acompanhamento (IA)",
+      "level": "Nível",
+      "ai_rec": "Recomendação do Agente IA",
+      "evolution": "Evolução",
+      "detail": "Detalhes",
+      "close": "Fechar",
+      "no_info": "Sem informação"
+    },
+    "badges": {
+      "crit": "Prioritário",
+      "aten": "Atenção",
+      "norm": "Normal",
+      "nodata": "Sem informação"
+    },
+    "detail_panel": {
+      "is_breakdown": "Detalhamento do IA — Sem.",
+      "comp_lms": "Frequência em LMS (40%)",
+      "comp_grades": "Desempenho (35%)",
+      "comp_submissions": "Entregas (25%)",
+      "no_perf_info": "Não há informações suficientes para calcular o desempenho.",
+      "context_title": "Justificativa (Questionário da Disciplina)",
+      "no_context": "Nenhum contexto registrado.",
+      "ai_report_title": "RELATÓRIO PEDAGÓGICO DO AGENTE UNI+",
+      "regenerate_tooltip": "Atualizar Relatório",
+      "ai_analyzing": "Agente UNI+ analisando perfil...",
+      "ai_prompt_manual": "Pressione o botão para gerar uma recomendação personalizada.",
+      "ai_gen_btn": "Gerar Relatório UNI+",
+      "actions_title": "Registrar ação de acompanhamento",
+      "history_title": "Histórico de Indicadores"
+    },
+    "followup_form": {
+      "select_action": "Selecionar ação...",
+      "action_email": "Contatado por e-mail",
+      "action_meeting": "Reunião presencial agendada",
+      "action_welfare": "Encaminhado ao bem-estar",
+      "action_other": "Outro",
+      "notes_placeholder": "Anotações",
+      "save_btn": "Salvar ação",
+      "saving_btn": "Salvando...",
+      "success_msg": "Ação salva com sucesso!",
+      "error_select": "Por favor, selecione uma ação primeiro.",
+      "week": "Semana"
+    },
+    "config_modal": {
+      "title": "Configuração do Agente de IA",
+      "provider": "Provedor de IA",
+      "key": "Chave API",
+      "model": "Modelo Específico",
+      "base_url": "Base URL (Opcional)",
+      "help_url": "Somente para provedores personalizados ou modelos locais.",
+      "save_btn": "Salvar Configuração",
+      "close_btn": "Fechar"
+    },
+    "survey_modal": {
+      "title": "Envio do Formulário do Aluno",
+      "upload_hint": "Arraste seu arquivo Excel aqui ou clique para procurar",
+      "process_btn": "Visualizar alterações",
+      "close_btn": "Fechar"
+    },
+    "survey_questions": {
+      "q1": "O que você destacaria no design desta disciplina?",
+      "q2": "Quais aspectos desta disciplina você acha mais difíceis de resolver?",
+      "q3": "O que você precisa para avançar nesta disciplina?",
+      "q4": "Você quer que o(a) professor(a) entre em contato com você?"
+    }
+  },
+  "gl": {
+    "header": {
+      "title": "Panel de Seguimento Estudantil (Uni+)",
+      "refresh_btn": "Analizar e Refrescar Axente"
+    },
+    "filters": {
+      "label": "Seguimento activo:",
+      "crit": "Prioritarios",
+      "aten": "En atención",
+      "norm": "En seguimento normal",
+      "nodata": "Sen actividade rexistrada"
+    },
+    "nav": {
+      "dashboard": "Panel",
+      "survey": "Carga Formulario Estudiantil"
+    },
+    "search": {
+      "placeholder": "Escribe o nome do estudante para unha procura rápida..."
+    },
+    "table": {
+      "student": "Estudante",
+      "sort_az": "Sort A-Z",
+      "is": "Indicador de Éxito (IE)",
+      "level": "Nivel",
+      "ai_rec": "Recomendación axente AI",
+      "evolution": "Evolución",
+      "detail": "Detalle",
+      "close": "Pechar",
+      "no_info": "Sen información"
+    },
+    "badges": {
+      "crit": "Prioritario",
+      "aten": "Atención",
+      "norm": "Normal",
+      "nodata": "Sen información"
+    },
+    "detail_panel": {
+      "is_breakdown": "Desglose do IE — Sem.",
+      "comp_lms": "Actividade LMS (40%)",
+      "comp_grades": "Rendemento (35%)",
+      "comp_submissions": "Entregas (25%)",
+      "no_perf_info": "Non hai información abonda para calcular o comportamento (Rendemento)",
+      "context_title": "Contexto declarado (enquisa de materia)",
+      "no_context": "Sen contexto rexistrado.",
+      "ai_report_title": "INFORME PEDAGÓXICO DO AXENTE UNI+",
+      "regenerate_tooltip": "Rexenerar Informe",
+      "ai_analyzing": "Axente UNI+ analizando perfil...",
+      "ai_prompt_manual": "Preme o botón para xerar unha recomendación personalizada.",
+      "ai_gen_btn": "Xerar Informe UNI+",
+      "actions_title": "Rexistrar acción de seguimento",
+      "history_title": "Historial de IE"
+    },
+    "followup_form": {
+      "select_action": "Seleccionar acción...",
+      "action_email": "Contacto realizado por correo",
+      "action_meeting": "Cita presencial agendada",
+      "action_welfare": "Derivado a bienestar",
+      "action_other": "Outro",
+      "notes_placeholder": "Notas internas...",
+      "save_btn": "Gardar acción",
+      "saving_btn": "Gardando...",
+      "success_msg": "¡Axente gardada con éxito!",
+      "error_select": "Por favor, selecciona unha acción primeiro.",
+      "week": "Semana"
+    },
+    "config_modal": {
+      "title": "Configuración do Axente de IA",
+      "provider": "Provedor de IA",
+      "key": "API Key",
+      "model": "Modelo Específico",
+      "base_url": "Base URL (Opcional)",
+      "help_url": "Só para provedores personalizados ou modelos locais",
+      "save_btn": "Gardar Configuración",
+      "close_btn": "Pechar"
+    },
+    "survey_modal": {
+      "title": "Carga do Formulario do Estudante",
+      "upload_hint": "Arrastra o teu arquivo Excel aquí ou fai clic para buscalo",
+      "process_btn": "Previsualizar cambios",
+      "close_btn": "Pechar"
+    },
+    "survey_questions": {
+      "q1": "Que destacarías do deseño desta materia?",
+      "q2": "Que aspectos desta materia che resultan máis difíciles de resolver?",
+      "q3": "Que precisas para avanzar nesta materia?",
+      "q4": "Queres que o/a docente se poña en contacto contigo?"
+    }
+  }
+}
