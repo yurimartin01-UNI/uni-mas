@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>UNI+ — Plugin para Moodle</title>
+<meta name="description" content="Plugin experimental para Moodle orientado al seguimiento estudiantil y apoyo docente mediante indicadores académicos e IA. Pilotaje interuniversitario UTEC–UBA.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Source+Serif+4:ital,wght@0,400;0,600;1,400&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="icon" type="image/png" href="favicon.png">
+</head>
+<body>
+
+<header class="site-header">
+  <div class="container nav">
+    <a href="#home" class="brand">
+      <img src="logo.png" alt="UNI+" class="brand-logo">
+    </a>
+    <nav>
+      <a href="#about">Proyecto</a>
+      <a href="#demo">Demo</a>
+      <a href="#architecture">Arquitectura</a>
+      <a href="#status">Estado</a>
+      <a href="#install">Instalación</a>
+      <a href="#data">Datos</a>
+      <a href="#aporte">Aporte</a>
+      <a href="https://github.com/yurimartin01-UNI/uni-mas" class="nav-cta" target="_blank" rel="noopener">GitHub →</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+
+<!-- HERO -->
+<section id="home" class="hero">
+  <div class="container">
+    <div class="hero-grid">
+      <div class="hero-text">
+        <div class="status-pill">
+          <span class="status-dot"></span>
+          Prototipo funcional · etapa de pilotaje interuniversitario
+        </div>
+        <h1 class="hero-title">
+          <img src="logo.png" alt="UNI+" class="hero-logo">
+          <span class="visually-hidden">UNI+</span>
+        </h1>
+        <p class="lead">
+          Plugin experimental para <strong>Moodle</strong> orientado al seguimiento
+          estudiantil y al apoyo docente mediante indicadores académicos
+          combinados con asistencia de IA.
+        </p>
+        <p class="quote">
+          <span class="quote-mark">“</span>La IA asiste; el docente decide.<span class="quote-mark">”</span>
+        </p>
+        <div class="hero-actions">
+          <a href="https://github.com/yurimartin01-UNI/uni-mas" class="btn btn-primary" target="_blank" rel="noopener">Ver repositorio</a>
+          <a href="#install" class="btn btn-secondary">Instalación</a>
+          <a href="#architecture" class="btn btn-secondary">Arquitectura</a>
+          <a href="#data" class="btn btn-secondary">Protección de datos</a>
+        </div>
+      </div>
+      <aside class="hero-meta">
+        <dl>
+          <dt>Versión</dt><dd>0.2.0 <span class="meta-tag">BETA</span></dd>
+          <dt>Tipo</dt><dd>Local plugin para Moodle</dd>
+          <dt>Stack</dt><dd>PHP · JS · CSS</dd>
+          <dt>Compatibilidad</dt><dd>Moodle 4.1 LTS o superior</dd>
+          <dt>Licencia</dt><dd>GNU GPL v3</dd>
+          <dt>Pilotaje</dt><dd>UTEC · UBA · mayo–agosto 2026</dd>
+          <dt>Coordinación</dt><dd>Labs UniversitarIA · SEGIB</dd>
+        </dl>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about" class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">01</span>
+      <h2>Sobre el proyecto</h2>
+    </div>
+    <div class="about-grid">
+      <div class="about-body">
+        <p>
+          UNI+ es un plugin para Moodle que apoya al cuerpo docente en el seguimiento
+          estudiantil. Consolida indicadores objetivos calculados a partir de los
+          registros nativos del LMS y los presenta en un panel donde el docente puede
+          observar la trayectoria de cada estudiante y recibir sugerencias pedagógicas
+          generadas con asistencia de un modelo de lenguaje.
+        </p>
+        <p>
+          El proyecto se desarrolla en el marco del piloto interuniversitario
+          coordinado por SEGIB en el Lab UniversitarIA, con participación de UTEC
+          y UBA durante el período mayo–agosto 2026.
+        </p>
+      </div>
+      <div class="about-side">
+        <h3>Qué hace</h3>
+        <ul class="list-clean">
+          <li>Consolida actividad, rendimiento y entregas por estudiante.</li>
+          <li>Calcula un Índice de Seguimiento (IS) que resume la trayectoria.</li>
+          <li>Clasifica patrones en niveles de prioridad de atención.</li>
+          <li>Genera sugerencias pedagógicas con asistencia de un modelo de lenguaje.</li>
+          <li>Registra las acciones e intervenciones que el docente decide.</li>
+        </ul>
+        <h3>Qué no hace</h3>
+        <ul class="list-clean list-no">
+          <li>No toma decisiones automáticas.</li>
+          <li>No predice deserción ni asigna scores individuales de riesgo.</li>
+          <li>No reemplaza el criterio docente.</li>
+          <li>No utiliza datos sensibles por restricción explícita del diseño.</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO VISUAL -->
+<section id="demo" class="section section-alt">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">02</span>
+      <h2>Demostración visual</h2>
+    </div>
+    <p class="section-intro">
+      Demostración visual preliminar del panel UNI+ en entorno de desarrollo. La interfaz
+      y las funcionalidades continúan en proceso de consolidación para el pilotaje
+      interuniversitario.
+    </p>
+
+    <figure class="demo-figure">
+      <div class="demo-frame">
+        <video
+          class="demo-video"
+          src="assets/video/DemoVisual.mp4"
+          controls
+          preload="metadata"
+          playsinline
+          aria-label="Demostración visual del panel UNI+"
+        >
+          Tu navegador no soporta la reproducción de video HTML5.
+          <a href="assets/video/DemoVisual.mp4">Descargar video</a>.
+        </video>
+      </div>
+      <figcaption class="demo-caption">
+        <span class="demo-tag">Captura · entorno de desarrollo</span>
+        <span class="demo-note">El contenido del video tiene fines ilustrativos y puede no reflejar la versión final del plugin.</span>
+      </figcaption>
+    </figure>
+  </div>
+</section>
+
+<!-- ARCHITECTURE -->
+<section id="architecture" class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">03</span>
+      <h2>Arquitectura</h2>
+    </div>
+    <p class="section-intro">
+      UNI+ es un plugin local de Moodle. Se instala en <code>moodle/local/unimas</code>
+      y se ejecuta dentro de la propia infraestructura institucional. Los componentes
+      principales se relacionan así:
+    </p>
+
+    <div class="arch-diagram">
+      <div class="arch-row">
+        <div class="arch-box arch-source">
+          <div class="arch-label">Moodle</div>
+          <div class="arch-sub">LMS institucional · datos nativos del curso</div>
+        </div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-row">
+        <div class="arch-box arch-plugin">
+          <div class="arch-label">Plugin UNI+ (local_unimas)</div>
+          <div class="arch-sub">PHP · JS · CSS dentro de Moodle</div>
+        </div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-row arch-row-split">
+        <div class="arch-box arch-process">
+          <div class="arch-label">Procesamiento de indicadores</div>
+          <div class="arch-sub">Cálculo del IS · actividad, rendimiento, entregas</div>
+        </div>
+        <div class="arch-box arch-ai">
+          <div class="arch-label">Integración IA configurable</div>
+          <div class="arch-sub">Proveedor externo · gateway institucional · modelo local</div>
+        </div>
+      </div>
+      <div class="arch-arrow">↓</div>
+      <div class="arch-row">
+        <div class="arch-box arch-dest">
+          <div class="arch-label">Panel docente</div>
+          <div class="arch-sub">Visualización · sugerencias · registro de acciones</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="arch-notes">
+      <div class="arch-note">
+        <h4>Backend</h4>
+        <p>PHP, siguiendo la arquitectura estándar de plugins Moodle. Capabilities, settings administrativos y scheduled tasks gestionados desde la propia plataforma.</p>
+      </div>
+      <div class="arch-note">
+        <h4>Frontend</h4>
+        <p>HTML, CSS y JavaScript vanilla. SheetJS local para procesamiento de archivos Excel del lado del cliente.</p>
+      </div>
+      <div class="arch-note">
+        <h4>Integración con IA</h4>
+        <p>Compatible con endpoints tipo OpenAI (Gemini, OpenAI, Anthropic, DeepSeek), gateway institucional o modelo local self-hosted. Lista blanca de dominios configurada en el plugin.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- STATUS -->
+<section id="status" class="section section-alt">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">04</span>
+      <h2>Estado del pilotaje</h2>
+    </div>
+    <p class="section-intro">
+      El proyecto se encuentra en etapa de pilotaje. Esta es una lectura honesta
+      de lo que está consolidado y lo que sigue en construcción.
+    </p>
+
+    <div class="status-grid">
+      <article class="status-card status-green">
+        <header>
+          <span class="status-marker"></span>
+          <h3>Avances consolidados</h3>
+        </header>
+        <ul>
+          <li>Plugin funcional en versión 0.2.0 BETA.</li>
+          <li>Repositorio disponible bajo licencia GPL v3.</li>
+          <li>Documentación técnica y pedagógica preliminar.</li>
+          <li>Análisis preliminar de protección de datos.</li>
+          <li>Coordinación interuniversitaria activa (UTEC · UBA · SEGIB).</li>
+        </ul>
+      </article>
+
+      <article class="status-card status-yellow">
+        <header>
+          <span class="status-marker"></span>
+          <h3>En consolidación</h3>
+        </header>
+        <ul>
+          <li>Ajustes técnicos previos al uso institucional estable.</li>
+          <li>Validaciones institucionales en cada universidad participante.</li>
+          <li>Definición de infraestructura de integración con IA.</li>
+          <li>Calibración inicial de pesos y umbrales del IS.</li>
+          <li>Selección final de los cursos del piloto.</li>
+        </ul>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- INSTALL -->
+<section id="install" class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">05</span>
+      <h2>Instalación</h2>
+    </div>
+    <p class="section-intro">
+      UNI+ se instala como cualquier plugin local de Moodle. Requiere acceso de
+      administración del sitio.
+    </p>
+
+    <ol class="steps">
+      <li>
+        <h4>1. Obtener el código</h4>
+        <p>Clonar el repositorio o descargar la versión más reciente:</p>
+        <pre><code>git clone https://github.com/yurimartin01-UNI/uni-mas.git</code></pre>
+      </li>
+      <li>
+        <h4>2. Copiar el plugin a Moodle</h4>
+        <p>Colocar la carpeta <code>unimas</code> dentro del directorio <code>local/</code> de la instalación de Moodle.</p>
+        <pre><code>cp -r uni-mas/unimas /ruta/a/moodle/local/</code></pre>
+        <p class="muted">La ruta final debe ser <code>moodle/local/unimas</code>.</p>
+      </li>
+      <li>
+        <h4>3. Completar la instalación desde Moodle</h4>
+        <p>Acceder como administrador y dirigirse a <em>Administración del sitio → Notificaciones</em>. Moodle detectará el plugin y aplicará las tablas correspondientes a la base de datos.</p>
+      </li>
+      <li>
+        <h4>4. Configurar la integración con IA</h4>
+        <p>En la configuración del plugin, seleccionar el proveedor (Gemini, OpenAI, Anthropic Claude, DeepSeek o endpoint personalizado) y registrar la API key correspondiente.</p>
+      </li>
+      <li>
+        <h4>5. Asignar permisos</h4>
+        <p>El plugin define la capability <code>local/unimas:view</code>, otorgada por defecto a los roles <em>editingteacher</em> y <em>manager</em>.</p>
+      </li>
+    </ol>
+
+    <div class="info-box">
+      <strong>Requisitos técnicos</strong>
+      <ul>
+        <li>Moodle 4.1 LTS o superior.</li>
+        <li>PHP 8.1 o superior.</li>
+        <li>Base de datos compatible con Moodle (PostgreSQL, MySQL, MariaDB).</li>
+        <li>Extensiones PHP: <code>curl</code>, <code>json</code>, <code>mbstring</code>.</li>
+        <li>Conectividad saliente hacia el proveedor de IA configurado.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- DATA PROTECTION -->
+<section id="data" class="section section-alt">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">06</span>
+      <h2>Protección de datos</h2>
+    </div>
+    <p class="section-intro">
+      El diseño del plugin incorpora consideraciones de protección de datos desde
+      el inicio. El cumplimiento legal final depende de las definiciones
+      institucionales de cada universidad participante.
+    </p>
+
+    <div class="data-grid">
+      <div class="data-item">
+        <h4>Minimización</h4>
+        <p>Solo se transmiten al modelo de IA los datos estrictamente necesarios para generar las sugerencias. No se envían identificadores personales ni datos sensibles.</p>
+      </div>
+      <div class="data-item">
+        <h4>Restricción explícita</h4>
+        <p>Por diseño, el sistema no utiliza datos de género, renta, raza, religión, salud ni otras categorías sensibles.</p>
+      </div>
+      <div class="data-item">
+        <h4>Integración configurable</h4>
+        <p>El plugin soporta proveedor externo, gateway institucional o modelo local self-hosted. La elección depende de la política de cada institución.</p>
+      </div>
+      <div class="data-item">
+        <h4>Lista blanca de endpoints</h4>
+        <p>El plugin valida que las URLs de IA configuradas pertenezcan a dominios previamente aprobados.</p>
+      </div>
+      <div class="data-item">
+        <h4>Acceso restringido</h4>
+        <p>El panel docente requiere capability propia (<code>local/unimas:view</code>) asignada a docentes y gestores del curso. Las acciones se protegen mediante verificación de token de sesión.</p>
+      </div>
+      <div class="data-item">
+        <h4>Documento preliminar</h4>
+        <p>Existe un análisis preliminar de protección de datos preparado para el piloto, disponible bajo coordinación.</p>
+      </div>
+    </div>
+
+    <div class="info-box info-box-muted">
+      Esta sección describe el diseño técnico del plugin en materia de datos.
+      No constituye una declaración de cumplimiento legal definitivo. La
+      verificación final corresponde a cada institución según su marco
+      normativo aplicable.
+    </div>
+  </div>
+</section>
+
+<!-- APORTE PRELIMINAR -->
+<section id="aporte" class="section">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">07</span>
+      <h2>Aporte preliminar</h2>
+    </div>
+    <p class="section-intro">
+      En el marco del piloto se elaboró un documento de trabajo con una primera lectura
+      técnica y conceptual sobre aspectos de protección de datos en el plugin
+      <code>local_unimas</code>. Se ofrece como insumo para la discusión interdisciplinaria.
+    </p>
+
+    <article class="paper-card">
+      <div class="paper-meta">
+        <div class="paper-type">Documento de trabajo</div>
+        <div class="paper-date">Mayo 2026</div>
+      </div>
+
+      <h3 class="paper-title">
+        Consideraciones técnicas sobre protección de datos en UNI+
+      </h3>
+      <p class="paper-subtitle">
+        Lectura preliminar del plugin <code>local_unimas</code>
+      </p>
+
+      <div class="paper-tags">
+        <span class="paper-tag">Protección de datos</span>
+        <span class="paper-tag">Ley 18.331 · Decreto 64/020</span>
+        <span class="paper-tag">Ley 25.326 · AAIP</span>
+        <span class="paper-tag">Análisis técnico</span>
+      </div>
+
+      <div class="paper-body">
+        <p>
+          Se revisan elementos relativos a minimización del dato transmitido, gestión
+          de permisos, control de la salida HTTP, retención y transferencias internacionales.
+          El documento identifica fortalezas del diseño actual y propone ajustes prioritarios
+          para sostener un piloto controlado, así como líneas adicionales de trabajo para
+          una eventual implementación institucional ampliada.
+        </p>
+        <p class="paper-aside">
+          Toma como referencia la <strong>Ley 18.331</strong> y el <strong>Decreto 64/020</strong>
+          (Uruguay), y la <strong>Ley 25.326</strong> y normativa complementaria de la
+          <strong>AAIP</strong> (Argentina).
+        </p>
+      </div>
+
+      <aside class="paper-disclaimer">
+        <span class="disclaimer-mark">!</span>
+        <div>
+          <strong>Naturaleza del documento</strong>
+          <p>
+            Este aporte <em>no constituye una auditoría formal ni un dictamen jurídico</em>.
+            Su propósito es facilitar el diálogo interdisciplinario y orientar la definición
+            de un eventual piloto. Las observaciones son habituales en sistemas en etapa
+            temprana de desarrollo y se ofrecen como insumo para el equipo del proyecto.
+          </p>
+        </div>
+      </aside>
+
+      <div class="paper-actions">
+        <a href="assets/UNI_proteccion_datos_aporte_preliminar.pdf"
+           class="btn btn-primary" target="_blank" rel="noopener">
+           Abrir documento (PDF)
+        </a>
+        <a href="assets/UNI_proteccion_datos_aporte_preliminar.pdf"
+           class="btn btn-secondary" download>
+           Descargar
+        </a>
+      </div>
+
+      <footer class="paper-footer">
+        <dl class="paper-info">
+          <div><dt>Formato</dt><dd>PDF · 5 páginas</dd></div>
+          <div><dt>Etapa</dt><dd>Documento de trabajo · revisión interdisciplinaria</dd></div>
+          <div><dt>Alcance</dt><dd>Insumo preliminar para discusión del equipo</dd></div>
+        </dl>
+      </footer>
+    </article>
+  </div>
+</section>
+
+<!-- DOCUMENTATION -->
+<section id="docs" class="section section-alt">
+  <div class="container">
+    <div class="section-head">
+      <span class="section-num">08</span>
+      <h2>Documentación</h2>
+    </div>
+    <p class="section-intro">
+      Recursos disponibles para los equipos participantes del pilotaje.
+    </p>
+
+    <div class="docs-grid">
+      <a class="doc-card" href="https://github.com/yurimartin01-UNI/uni-mas" target="_blank" rel="noopener">
+        <div class="doc-icon">◆</div>
+        <h4>Repositorio GitHub</h4>
+        <p>Código fuente del plugin, versión actual, issues y releases.</p>
+        <span class="doc-link">github.com/yurimartin01-UNI/uni-mas →</span>
+      </a>
+      <a class="doc-card" href="#architecture">
+        <div class="doc-icon">▣</div>
+        <h4>Arquitectura</h4>
+        <p>Descripción técnica del plugin y su integración con Moodle.</p>
+        <span class="doc-link">Ver sección →</span>
+      </a>
+      <a class="doc-card" href="#install">
+        <div class="doc-icon">▶</div>
+        <h4>Guía de instalación</h4>
+        <p>Pasos para instalar y configurar UNI+ en una instancia de Moodle.</p>
+        <span class="doc-link">Ver sección →</span>
+      </a>
+      <a class="doc-card" href="#data">
+        <div class="doc-icon">●</div>
+        <h4>Protección de datos</h4>
+        <p>Lineamientos de diseño aplicados en el manejo de datos.</p>
+        <span class="doc-link">Ver sección →</span>
+      </a>
+      <a class="doc-card" href="https://github.com/yurimartin01-UNI/uni-mas/blob/main/unimas/README.md" target="_blank" rel="noopener">
+        <div class="doc-icon">▤</div>
+        <h4>README del plugin</h4>
+        <p>Documentación técnica del plugin en el repositorio.</p>
+        <span class="doc-link">Ver en GitHub →</span>
+      </a>
+      <a class="doc-card" href="#aporte">
+        <div class="doc-icon">◐</div>
+        <h4>Aporte preliminar</h4>
+        <p>Consideraciones técnicas sobre protección de datos en UNI+ (documento de trabajo).</p>
+        <span class="doc-link">Ver sección →</span>
+      </a>
+    </div>
+  </div>
+</section>
+
+</main>
+
+<footer class="site-footer">
+  <div class="container footer-grid">
+    <div class="footer-brand">
+      <a href="#home" class="brand brand-footer">
+        <img src="logo.png" alt="UNI+" class="brand-logo-footer">
+      </a>
+      <p class="footer-tagline">
+        Plugin experimental para Moodle.<br>
+        Proyecto en etapa de pilotaje.
+      </p>
+    </div>
+    <div class="footer-col">
+      <h5>Pilotaje</h5>
+      <ul>
+        <li>Labs UniversitarIA</li>
+        <li>SEGIB</li>
+        <li>UTEC (Uruguay)</li>
+        <li>UBA (Argentina)</li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Proyecto</h5>
+      <ul>
+        <li><a href="https://github.com/yurimartin01-UNI/uni-mas" target="_blank" rel="noopener">Repositorio GitHub</a></li>
+        <li><a href="#install">Instalación</a></li>
+        <li><a href="#data">Protección de datos</a></li>
+      </ul>
+    </div>
+    <div class="footer-col">
+      <h5>Crédito original</h5>
+      <ul>
+        <li>Sara Rojas</li>
+        <li>Vicente Astorga</li>
+        <li>Licencia GPL v3</li>
+      </ul>
+    </div>
+  </div>
+  <div class="container footer-bottom">
+    <p>Sitio del proyecto UNI+ · 2026 · Documentación del pilotaje interuniversitario.</p>
+  </div>
+</footer>
+
+</body>
+</html>
