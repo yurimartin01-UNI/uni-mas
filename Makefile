@@ -1,6 +1,8 @@
 SHELL := /usr/bin/env bash
 
-.PHONY: init up up-tools down restart logs ps shell php fix-perms moodle-config purge reset
+.PHONY: init up up-tools down restart logs ps shell php fix-perms moodle-config purge reset reset-demo
+
+DEMO_PASSWORD ?= Demo123!
 
 init:
 	@if [[ ! -f .env ]]; then cp .env.example .env; fi
@@ -50,3 +52,8 @@ purge:
 
 reset:
 	docker compose down -v
+
+reset-demo:
+	docker compose exec -T plugin-sync sh -lc 'rsync -a --delete /src/ /moodle/local/unimas/'
+	docker compose exec --user daemon -T moodle /opt/bitnami/php/bin/php /bitnami/moodle/local/unimas/cli/reset_demo_data.php --force --password='$(DEMO_PASSWORD)'
+	@echo "Reset demo completado. Password usuarios demo: $(DEMO_PASSWORD)"
