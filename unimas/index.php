@@ -21,15 +21,17 @@ $context = context_course::instance($courseid);
 require_login($course);
 require_capability('moodle/course:manageactivities', $context);
 
+$pageurl = new moodle_url('/local/unimas/index.php', array('courseid' => $courseid));
+$PAGE->set_url($pageurl);
+
 // Handle AJAX actions before any output.
 // require_sesskey() validates the 'sesskey' POST param against the user's session
 // token, protecting every action from Cross-Site Request Forgery (CSRF).
 if ($action = optional_param('action', '', PARAM_ALPHANUMEXT)) {
     require_sesskey();
-    \local_unimas\action_handler::handle($action, $courseid, $PAGE->url, true);
+    \local_unimas\action_handler::handle($action, $courseid, $pageurl, true);
 }
 
-$PAGE->set_url(new moodle_url('/local/unimas/index.php', array('courseid' => $courseid)));
 $PAGE->set_context($context);
 $PAGE->set_title('UNI+ — Panel Docente');
 $PAGE->set_heading($course->fullname);
@@ -369,15 +371,16 @@ echo $OUTPUT->header();
         <div class="config-group">
           <label class="config-label" data-i18n="config_modal.provider">Proveedor de IA</label>
           <select id="config-provider" class="config-select">
-            <option value="google" <?php echo (isset($config) && $config->ai_provider === 'google') ? 'selected' : ''; ?>>Google Gemini</option>
+            <option value="gemini" <?php echo (isset($config) && $config->ai_provider === 'gemini') ? 'selected' : ''; ?>>Google Gemini</option>
             <option value="openai" <?php echo (isset($config) && $config->ai_provider === 'openai') ? 'selected' : ''; ?>>OpenAI</option>
-            <option value="claude" <?php echo (isset($config) && $config->ai_provider === 'claude') ? 'selected' : ''; ?>>Anthropic Claude</option>
+            <option value="anthropic" <?php echo (isset($config) && $config->ai_provider === 'anthropic') ? 'selected' : ''; ?>>Anthropic Claude</option>
+            <option value="deepseek" <?php echo (isset($config) && $config->ai_provider === 'deepseek') ? 'selected' : ''; ?>>DeepSeek</option>
             <option value="custom" <?php echo (isset($config) && $config->ai_provider === 'custom') ? 'selected' : ''; ?>>Custom</option>
           </select>
         </div>
         <div class="config-group">
           <label class="config-label" data-i18n="config_modal.key">API Key</label>
-          <input type="password" id="config-key" class="config-input" placeholder="sk-..." value="<?php echo isset($config) && isset($config->api_key) ? s($config->api_key) : ''; ?>">
+          <input type="password" id="config-key" class="config-input" placeholder="sk-..." value="">
         </div>
         <div class="config-group">
           <label class="config-label" data-i18n="config_modal.model">Modelo Específico</label>
@@ -939,7 +942,14 @@ async function saveAIConfig() {
             method: 'POST',
             body: formData
         });
-        const result = await response.json();
+        const raw = await response.text();
+        let result = null;
+        try {
+            result = JSON.parse(raw);
+        } catch (_) {
+            const msg = (raw || '').slice(0, 300).replace(/\s+/g, ' ').trim();
+            throw new Error(msg || `Respuesta no JSON (HTTP ${response.status})`);
+        }
         if (result.status === 'success') {
             alert('Configuración guardada correctamente. Recargando panel...');
             location.reload();
@@ -947,8 +957,8 @@ async function saveAIConfig() {
             alert('Error: ' + result.message);
         }
     } catch (e) {
-        console.error(e);
-        alert('Error al guardar la configuración.');
+        console.error('saveAIConfig failed:', e);
+        alert('Error al guardar la configuración. ' + (e?.message ? `Detalle: ${e.message}` : ''));
     }
 }
 
