@@ -47,8 +47,13 @@ class lock_manager {
         }
     }
 
- * @param \moodle_url $unlock_url  URL for the unlock button
-     * @param string     $btn_label    Button label (e.g. "🔓 Cambiar de modo")
+    /**
+     * Render lock warning banner and unlock action button.
+     *
+     * @param string      $title       Banner title
+     * @param string      $message     Banner explanatory message
+     * @param \moodle_url $unlock_url  URL for the unlock button
+     * @param string      $btn_label   Button label (e.g. "🔓 Cambiar de modo")
      */
     public static function render_lock_banner(
         string $title,
