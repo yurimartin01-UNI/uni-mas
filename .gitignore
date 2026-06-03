@@ -20,5 +20,5 @@
 /fuel/app/cache/*/*
 /fuel/app/config/crypt.php
 
-# local docker environment
+# local environment
 /.env

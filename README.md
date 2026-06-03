@@ -1,88 +1,36 @@
-# uni+ (local_unimas)
-Plugin experimental para Moodle orientado al seguimiento estudiantil y apoyo docente mediante indicadores académicos e IA.
+# Uni+ (local_unimas)
 
-## Entorno de desarrollo con Docker Compose
+Plugin local para Moodle orientado al seguimiento estudiantil y apoyo docente mediante indicadores academicos e IA.
 
-Este repo queda listo para levantar un ambiente completo de testing/desarrollo con:
-- Moodle
-- MariaDB
-- Mailpit (SMTP + visor de correos)
-- Adminer (inspección de base de datos, opcional con profile `tools`)
-- Plugin `local_unimas` montado en vivo (hot reload de código del plugin)
+## Requisitos
 
-### Requisitos
-- Docker Engine + Docker Compose v2
+- Moodle 4.5 o superior.
+- PHP 8.1 o superior, segun la version soportada por la instancia de Moodle.
+- Base de datos soportada por Moodle.
+- Extension PHP `curl` habilitada para conectar con proveedores de IA.
 
-### Arranque rápido
-1. Inicializar variables:
-```bash
-make init
-```
+## Instalacion
 
-2. Levantar servicios:
-```bash
-make up
-```
+1. Copia la carpeta `unimas` dentro del directorio `local/` de Moodle.
+2. Verifica que la ruta final sea `moodle/local/unimas`.
+3. Ingresa a Moodle como administrador.
+4. Ve a `Administracion del sitio > Notificaciones`.
+5. Completa la instalacion o actualizacion del plugin cuando Moodle lo solicite.
 
-3. Entrar a Moodle:
-- URL: `http://localhost:18080` (o el puerto definido en `.env`)
-- Usuario admin: valor de `MOODLE_ADMIN_USER` en `.env`
-- Clave admin: valor de `MOODLE_ADMIN_PASSWORD` en `.env`
+## Configuracion
 
-4. Aplicar configuración de desarrollo en Moodle (debug + menos caché):
-```bash
-make moodle-config
-```
+La configuracion de IA se realiza desde el dashboard del plugin. Desde el icono de configuracion puedes seleccionar proveedor, modelo y API key para habilitar los analisis y recomendaciones pedagogicas.
 
-5. Instalar/actualizar el plugin en Moodle:
-- Ir a `Administración del sitio > Notificaciones`
-- Completar instalación/upgrade del plugin `local_unimas` si Moodle lo solicita
+## Funcionalidades
 
-## Hot reload del plugin
+- Tablero de seguimiento por curso.
+- Indicadores de prioridad estudiantil.
+- Analisis individual y global asistido por IA.
+- Carga de contexto cualitativo desde archivos Excel.
+- Registro de acciones docentes e intervenciones.
 
-El código local `./unimas` se sincroniza en caliente por el servicio `plugin-sync` hacia:
-`/bitnami/moodle/local/unimas` dentro del contenedor.
+## Documentacion del plugin
 
-Eso significa que al editar PHP/JS/CSS del plugin:
-- Los cambios quedan disponibles en segundos dentro del contenedor.
-- `plugin-sync` comienza a sincronizar automáticamente después de la instalación inicial de Moodle.
-- Para ver cambios front-end al instante, usa recarga dura del navegador.
-- Si Moodle cachea algo, ejecuta:
-```bash
-make purge
-```
-
-## URLs útiles
-- Moodle: `http://localhost:18080`
-- Mailpit UI: `http://localhost:18025`
-- Adminer (opcional): `http://localhost:18081`
-
-Para levantar Adminer también:
-```bash
-make up-tools
-```
-
-## Comandos útiles
-```bash
-make up         # Levanta entorno
-make up-tools   # Levanta entorno + Adminer
-make down       # Detiene entorno
-make logs       # Logs de servicios
-make ps         # Estado de contenedores
-make shell      # Shell dentro de contenedor moodle
-make fix-perms  # Repara permisos de /bitnami/moodle* si aparece error 500 por permisos
-make purge      # Purga cachés de Moodle
-make reset      # Baja y borra volúmenes (reset total)
-```
-
-## Notas
-- La primera subida puede tardar mientras Moodle inicializa.
-- Si cambias puertos/credenciales, edita `.env`.
-- El script `scripts/moodle-dev-config.sh` aplica flags útiles para desarrollo (debug, display errors, cachejs off, themedesignermode on).
-- Si aparece `Invalid permissions detected when trying to create a directory`, ejecuta:
-```bash
-make fix-perms
-make purge
-```
+La documentacion especifica del plugin esta disponible en `unimas/README.md`.
 
 La IA asiste; el docente decide.
