@@ -38,8 +38,8 @@
     "detail_panel": {
       "is_breakdown": "Desglose del IS — Sem.",
       "comp_lms": "Actividad LMS (40%)",
-      "comp_grades": "Rendimiento (35%)",
-      "comp_submissions": "Entregas (25%)",
+      "comp_grades": "Rendimiento (25%)",
+      "comp_submissions": "Entregas (35%)",
       "no_perf_info": "No hay información suficiente para calcular el comportamiento (Rendimiento).",
       "context_title": "Contexto declarado (Encuesta de Materia)",
       "no_context": "Sin contexto registrado.",
@@ -126,8 +126,8 @@
     "detail_panel": {
       "is_breakdown": "SI Breakdown — Week",
       "comp_lms": "LMS Activity (40%)",
-      "comp_grades": "Performance (35%)",
-      "comp_submissions": "Submissions (25%)",
+      "comp_grades": "Performance (25%)",
+      "comp_submissions": "Submissions (35%)",
       "no_perf_info": "Insufficient information to calculate performance behavior",
       "context_title": "Declared context (subject survey)",
       "no_context": "No recorded context",
@@ -214,8 +214,8 @@
     "detail_panel": {
       "is_breakdown": "Detalhamento do IA — Sem.",
       "comp_lms": "Frequência em LMS (40%)",
-      "comp_grades": "Desempenho (35%)",
-      "comp_submissions": "Entregas (25%)",
+      "comp_grades": "Desempenho (25%)",
+      "comp_submissions": "Entregas (35%)",
       "no_perf_info": "Não há informações suficientes para calcular o desempenho.",
       "context_title": "Justificativa (Questionário da Disciplina)",
       "no_context": "Nenhum contexto registrado.",
@@ -302,8 +302,8 @@
     "detail_panel": {
       "is_breakdown": "Desglose do IE — Sem.",
       "comp_lms": "Actividade LMS (40%)",
-      "comp_grades": "Rendemento (35%)",
-      "comp_submissions": "Entregas (25%)",
+      "comp_grades": "Rendemento (25%)",
+      "comp_submissions": "Entregas (35%)",
       "no_perf_info": "Non hai información abonda para calcular o comportamento (Rendemento)",
       "context_title": "Contexto declarado (enquisa de materia)",
       "no_context": "Sen contexto rexistrado.",
