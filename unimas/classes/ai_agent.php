@@ -13,6 +13,210 @@ defined('MOODLE_INTERNAL') || die();
  */
 class ai_agent
 {
+    private const SUPPORTED_PROVIDERS = ['gemini', 'openai', 'anthropic', 'deepseek', 'custom'];
+    private const SUPPORTED_LANGS = ['es', 'en', 'pt-br', 'gl'];
+    private const CACHE_TTL_SECONDS = 43200;
+
+    private static function normalize_provider(string $provider): string {
+        $p = strtolower(trim($provider));
+        switch ($p) {
+            case 'google':
+                return 'gemini';
+            case 'claude':
+                return 'anthropic';
+            default:
+                return $p;
+        }
+    }
+
+    private static function normalize_lang(string $lang): string {
+        $normalized = strtolower(trim(str_replace('_', '-', $lang)));
+        if (in_array($normalized, self::SUPPORTED_LANGS, true)) {
+            return $normalized;
+        }
+        return 'es';
+    }
+
+    private static function get_cache_payload($cached): array {
+        if (!$cached || empty($cached->recommendation)) {
+            return ['__lang_cache' => []];
+        }
+
+        $decoded = json_decode($cached->recommendation, true);
+        if (!is_array($decoded)) {
+            return ['__lang_cache' => []];
+        }
+
+        if (isset($decoded['__lang_cache']) && is_array($decoded['__lang_cache'])) {
+            return $decoded;
+        }
+
+        // Backward compatibility for old cache format without language separation.
+        return ['__lang_cache' => ['es' => ['ts' => (int)$cached->timecreated, 'response' => $decoded]]];
+    }
+
+    private static function get_cached_lang_response($cached, string $lang): ?array {
+        $payload = self::get_cache_payload($cached);
+        $entry = $payload['__lang_cache'][$lang] ?? null;
+        if (!is_array($entry) || !isset($entry['response'])) {
+            return null;
+        }
+
+        $ts = (int)($entry['ts'] ?? 0);
+        if ($ts <= 0 || (time() - $ts) >= self::CACHE_TTL_SECONDS) {
+            return null;
+        }
+
+        return is_array($entry['response']) ? $entry['response'] : null;
+    }
+
+    private static function upsert_lang_cache(int $courseid, int $week, ?int $studentid, string $lang, array $response, $cached): void {
+        global $DB;
+
+        $cachepayload = self::get_cache_payload($cached);
+        $cachepayload['__lang_cache'][$lang] = [
+            'ts' => time(),
+            'response' => $response,
+        ];
+
+        $record = new stdClass();
+        $record->courseid = $courseid;
+        $record->week = $week;
+        $record->student_id = $studentid;
+        $record->recommendation = json_encode($cachepayload, JSON_UNESCAPED_UNICODE);
+        $record->timecreated = time();
+
+        if ($cached) {
+            $record->id = $cached->id;
+            $DB->update_record('local_unimas_ai_cache', $record);
+        } else {
+            $DB->insert_record('local_unimas_ai_cache', $record);
+        }
+    }
+
+    private static function build_survey_signal($ctx): array {
+        if (empty($ctx) || !is_string($ctx)) {
+            return ['ctx_present' => false, 'contact_request' => 'unknown'];
+        }
+
+        $signal = ['ctx_present' => true, 'contact_request' => 'unknown'];
+        $decoded = json_decode($ctx, true);
+        if (!is_array($decoded)) {
+            return $signal;
+        }
+
+        foreach ($decoded as $question => $answer) {
+            $q = mb_strtolower(trim((string)$question));
+            if (strpos($q, 'ponga en contacto') !== false || strpos($q, 'contacto contigo') !== false) {
+                $ans = mb_strtolower(trim((string)$answer));
+                if ($ans === 'si' || $ans === 'sí' || strpos($ans, 'si') === 0 || strpos($ans, 'sí') === 0) {
+                    $signal['contact_request'] = 'yes';
+                } else if ($ans === 'no' || strpos($ans, 'no') === 0) {
+                    $signal['contact_request'] = 'no';
+                } else {
+                    $signal['contact_request'] = 'other';
+                }
+                break;
+            }
+        }
+
+        return $signal;
+    }
+
+    private static function build_trend_summary($hist, float $delta): array {
+        $values = [];
+        if (is_array($hist)) {
+            foreach ($hist as $v) {
+                if (is_numeric($v)) {
+                    $values[] = round((float)$v, 2);
+                }
+            }
+        }
+
+        $last4 = array_slice($values, -4);
+        return [
+            'recent_values' => $last4,
+            'delta' => round($delta, 2),
+        ];
+    }
+
+    private static function build_student_ai_payload(array $studentdata, int $courseid): array {
+        $uid = (int)($studentdata['uid'] ?? 0);
+        $comps = is_array($studentdata['comps'] ?? null) ? $studentdata['comps'] : [];
+        $ctxsignal = self::build_survey_signal($studentdata['ctx'] ?? null);
+
+        return [
+            'sid' => 'S-' . $courseid . '-' . $uid,
+            'level' => (string)($studentdata['level'] ?? 'nodata'),
+            'is' => isset($studentdata['is']) && is_numeric($studentdata['is']) ? round((float)$studentdata['is'], 2) : null,
+            'delta' => isset($studentdata['delta']) && is_numeric($studentdata['delta']) ? round((float)$studentdata['delta'], 2) : 0.0,
+            'I_A' => isset($comps['ent']) ? (float)$comps['ent'] : 0.0,
+            'I_R' => isset($comps['rend']) ? (float)$comps['rend'] : 0.0,
+            'I_E' => isset($comps['act']) ? (float)$comps['act'] : 0.0,
+            'no_info' => !empty($studentdata['no_info']),
+            'trend' => self::build_trend_summary($studentdata['hist'] ?? [], isset($studentdata['delta']) ? (float)$studentdata['delta'] : 0.0),
+            'ctx_signal' => $ctxsignal,
+        ];
+    }
+
+    private static function build_global_ai_payload(array $students, int $courseid): array {
+        $payload = [];
+        $sidmap = [];
+        $counter = 1;
+
+        foreach ($students as $s) {
+            $isideal = (($s['level'] ?? '') === 'norm' && ((float)($s['delta'] ?? 0)) >= 0);
+            if ($isideal) {
+                continue;
+            }
+
+            $realuid = (int)($s['uid'] ?? 0);
+            $sid = 'S' . $counter++;
+            $sidmap[$sid] = $realuid;
+            $comps = is_array($s['comps'] ?? null) ? $s['comps'] : [];
+
+            $payload[] = [
+                'uid' => $sid,
+                'level' => (string)($s['level'] ?? 'nodata'),
+                'is' => isset($s['is']) && is_numeric($s['is']) ? round((float)$s['is'], 2) : null,
+                'delta' => isset($s['delta']) && is_numeric($s['delta']) ? round((float)$s['delta'], 2) : 0.0,
+                'I_A' => isset($comps['ent']) ? (float)$comps['ent'] : 0.0,
+                'I_R' => isset($comps['rend']) ? (float)$comps['rend'] : 0.0,
+                'I_E' => isset($comps['act']) ? (float)$comps['act'] : 0.0,
+                'no_info' => !empty($s['no_info']),
+                'ctx_signal' => self::build_survey_signal($s['ctx'] ?? null),
+                'course_ref' => 'C-' . $courseid,
+            ];
+        }
+
+        return [$payload, $sidmap];
+    }
+
+    private static function remap_recommendation_uids(array $response, array $sidmap): array {
+        if (!isset($response['recommendations']) || !is_array($response['recommendations'])) {
+            return $response;
+        }
+
+        foreach ($response['recommendations'] as &$rec) {
+            $sid = isset($rec['uid']) ? (string)$rec['uid'] : '';
+            if ($sid !== '' && isset($sidmap[$sid])) {
+                $rec['uid'] = $sidmap[$sid];
+            }
+        }
+        unset($rec);
+
+        return $response;
+    }
+
+    private static function get_no_attention_message(string $lang): string {
+        $messages = [
+            'es' => 'Todos los estudiantes muestran un rendimiento ideal y tendencia positiva. ¡Buen trabajo!',
+            'en' => 'All students show strong performance and a positive trend. Great work!',
+            'pt-br' => 'Todos os estudantes apresentam bom desempenho e tendência positiva. Ótimo trabalho!',
+            'gl' => 'Todo o estudantado amosa bo rendemento e tendencia positiva. Bo traballo!',
+        ];
+        return $messages[$lang] ?? $messages['es'];
+    }
 
     /**
      * Get recommendations from the configured AI provider
@@ -28,6 +232,7 @@ class ai_agent
     public static function get_student_recommendation($courseid, $userid, $student_data, $week, $coursename, $lang = 'es')
     {
         global $DB;
+        $lang = self::normalize_lang((string)$lang);
 
         $provider = get_config('local_unimas', 'ai_provider') ?: 'gemini';
         $apikey = get_config('local_unimas', 'api_key');
@@ -37,12 +242,14 @@ class ai_agent
 
         // 1. Check specific student cache
         $cached = $DB->get_record('local_unimas_ai_cache', ['courseid' => $courseid, 'week' => $week, 'student_id' => $userid]);
-        if ($cached && (time() - $cached->timecreated < 43200)) {
-            return json_decode($cached->recommendation, true);
+        $cachedresponse = self::get_cached_lang_response($cached, $lang);
+        if ($cachedresponse !== null) {
+            return $cachedresponse;
         }
 
         // 2. Build targeted prompt
-        $student_json = json_encode($student_data, JSON_PRETTY_PRINT);
+        $minimalstudent = self::build_student_ai_payload($student_data, (int)$courseid);
+        $student_json = json_encode($minimalstudent, JSON_PRETTY_PRINT | JSON_UNESCAPED_UNICODE);
         $prompt = self::build_individual_prompt($week, $coursename, $student_json, $lang);
 
         // 3. Call AI
@@ -50,21 +257,7 @@ class ai_agent
 
         // 4. Cache
         if (!isset($response['error'])) {
-            $record = new stdClass();
-            $record->courseid = $courseid;
-            $record->week = $week;
-            $record->student_id = (int) $userid; // Explicit cast to int
-            $record->recommendation = json_encode($response);
-            $record->timecreated = time();
-
-            error_log("local_unimas: Saving AI report for student " . $record->student_id . " week " . $record->week);
-
-            if ($cached) {
-                $record->id = $cached->id;
-                $DB->update_record('local_unimas_ai_cache', $record);
-            } else {
-                $DB->insert_record('local_unimas_ai_cache', $record);
-            }
+            self::upsert_lang_cache((int)$courseid, (int)$week, (int)$userid, $lang, $response, $cached);
         }
 
         return $response;
@@ -73,6 +266,7 @@ class ai_agent
     public static function get_recommendations($courseid, $week, $dashboard_data, $lang = 'es')
     {
         global $DB;
+        $lang = self::normalize_lang((string)$lang);
 
         $provider = get_config('local_unimas', 'ai_provider') ?: 'gemini';
         $apikey = get_config('local_unimas', 'api_key');
@@ -84,33 +278,17 @@ class ai_agent
         // 1. Check cache first
         // We might want to clear cache if provider changes, but handled in action_handler
         $cached = $DB->get_record('local_unimas_ai_cache', ['courseid' => $courseid, 'week' => $week, 'student_id' => null]);
-        if ($cached && (time() - $cached->timecreated < 43200)) { // 12h cache
-            return json_decode($cached->recommendation, true);
+        $cachedresponse = self::get_cached_lang_response($cached, $lang);
+        if ($cachedresponse !== null) {
+            return $cachedresponse;
         }
 
-        // 2. Filter students according to Uni_mas logic (only those needing attention)
-        $target_students = [];
-        foreach ($dashboard_data['students'] as $s) {
-            $is_ideal = ($s['level'] === 'norm' && $s['delta'] >= 0);
-            if (!$is_ideal) {
-                $target_students[] = [
-                    'uid' => (int) $s['uid'],
-                    'name' => $s['name'],
-                    'level' => $s['level'],
-                    'is' => (float) $s['is'],
-                    'delta' => (float) $s['delta'],
-                    'I_A' => $s['comps']['ent'],  // Entregas
-                    'I_R' => $s['comps']['rend'], // Rendimiento
-                    'I_E' => $s['comps']['act'],  // Enganche
-                    'ctx' => $s['ctx'],
-                    'no_info' => $s['no_info']
-                ];
-            }
-        }
+        // 2. Build minimized payload (only students requiring attention + pseudonymous IDs).
+        [$target_students, $sidmap] = self::build_global_ai_payload($dashboard_data['students'], (int)$courseid);
 
         if (empty($target_students)) {
             return [
-                'global' => 'Todos los estudiantes muestran un rendimiento ideal y tendencia positiva. ¡Buen trabajo!',
+                'global' => self::get_no_attention_message($lang),
                 'recommendations' => []
             ];
         }
@@ -120,22 +298,13 @@ class ai_agent
 
         // 4. Call Universal AI Adapter
         $response = self::call_ai_provider($prompt, $provider, $apikey);
+        if (!isset($response['error'])) {
+            $response = self::remap_recommendation_uids($response, $sidmap);
+        }
 
         // 5. Store in cache if successful
         if (!isset($response['error'])) {
-            $record = new stdClass();
-            $record->courseid = $courseid;
-            $record->week = $week;
-            $record->student_id = null;
-            $record->recommendation = json_encode($response);
-            $record->timecreated = time();
-
-            if ($cached) {
-                $record->id = $cached->id;
-                $DB->update_record('local_unimas_ai_cache', $record);
-            } else {
-                $DB->insert_record('local_unimas_ai_cache', $record);
-            }
+            self::upsert_lang_cache((int)$courseid, (int)$week, null, $lang, $response, $cached);
         }
 
         return $response;
@@ -291,6 +460,11 @@ Debes responder exclusivamente con un objeto JSON siguiendo esta estructura exac
 
     private static function call_ai_provider($prompt, $provider, $apikey)
     {
+        $provider = self::normalize_provider((string)$provider);
+        if (!in_array($provider, self::SUPPORTED_PROVIDERS, true)) {
+            return ['error' => 'Proveedor de IA no soportado: ' . $provider];
+        }
+
         $model = get_config('local_unimas', 'ai_model') ?: 'gemini-1.5-flash';
         $baseurl = get_config('local_unimas', 'ai_base_url');
 
@@ -299,6 +473,8 @@ Debes responder exclusivamente con un objeto JSON siguiendo esta estructura exac
                 return self::call_gemini($prompt, $model, $apikey);
             case 'anthropic':
                 return self::call_anthropic($prompt, $model, $apikey);
+            case 'custom':
+                return self::call_openai_compatible($prompt, $model, $apikey, $baseurl);
             default:
                 $endpoint = $baseurl ?: self::get_default_endpoint($provider);
                 return self::call_openai_compatible($prompt, $model, $apikey, $endpoint);
@@ -312,8 +488,6 @@ Debes responder exclusivamente con un objeto JSON siguiendo esta estructura exac
                 return 'https://api.openai.com/v1/chat/completions';
             case 'deepseek':
                 return 'https://api.deepseek.com/chat/completions';
-            case 'anthropic':
-                return 'https://api.anthropic.com/v1/messages';
             default:
                 return '';
         }

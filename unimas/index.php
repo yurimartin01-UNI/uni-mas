@@ -18,24 +18,28 @@ if (!$course) {
 }
 
 $context = context_course::instance($courseid);
+$systemcontext = context_system::instance();
 require_login($course);
 require_capability('moodle/course:manageactivities', $context);
+
+$pageurl = new moodle_url('/local/unimas/index.php', array('courseid' => $courseid));
+$PAGE->set_url($pageurl);
 
 // Handle AJAX actions before any output.
 // require_sesskey() validates the 'sesskey' POST param against the user's session
 // token, protecting every action from Cross-Site Request Forgery (CSRF).
 if ($action = optional_param('action', '', PARAM_ALPHANUMEXT)) {
     require_sesskey();
-    \local_unimas\action_handler::handle($action, $courseid, $PAGE->url, true);
+    \local_unimas\action_handler::handle($action, $courseid, $pageurl, true);
 }
 
-$PAGE->set_url(new moodle_url('/local/unimas/index.php', array('courseid' => $courseid)));
 $PAGE->set_context($context);
 $PAGE->set_title('UNI+ — Panel Docente');
 $PAGE->set_heading($course->fullname);
+$langcode = current_language();
 
 $dashboard_data = \local_unimas\data_provider::get_dashboard_data($courseid);
-$ai_result = \local_unimas\ai_agent::get_recommendations($courseid, $dashboard_data['semana'], $dashboard_data); // Default 'es' in PHP, but will hit cache!
+$ai_result = \local_unimas\ai_agent::get_recommendations($courseid, $dashboard_data['semana'], $dashboard_data, $langcode);
 
 // Smart Merge: Conservar los reportes individuales más recientes y poblar solo lo faltante desde el reporte global
 if (empty($dashboard_data['ai']['global'])) {
@@ -61,8 +65,15 @@ if (isset($ai_result['recommendations']) && is_array($ai_result['recommendations
 
 // Add current config for the settings modal
 $config = get_config('local_unimas');
+$rawprovider = get_config('local_unimas', 'ai_provider');
+$normalizedprovider = strtolower(trim((string)$rawprovider));
+if ($normalizedprovider === 'google') {
+    $normalizedprovider = 'gemini';
+} else if ($normalizedprovider === 'claude') {
+    $normalizedprovider = 'anthropic';
+}
 $dashboard_data['config'] = [
-    'ai_provider' => get_config('local_unimas', 'ai_provider'),
+    'ai_provider' => $normalizedprovider ?: 'gemini',
     'ai_model'    => get_config('local_unimas', 'ai_model'),
     'ai_base_url' => get_config('local_unimas', 'ai_base_url')
 ];
@@ -131,25 +142,42 @@ echo $OUTPUT->header();
 .lang-item:hover { background: #f1f5f9; color: #0f172a; }
 .lang-item.active { background: #eff6ff; color: #2563eb; font-weight: 500; }
 
-.btn-analysis { background: linear-gradient(135deg, #60a5fa 0%, #4f46e5 100%); color: #fff; padding: 8px 20px; border-radius: 20px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(96,165,250,0.3); }
+.btn-analysis { background: #60a5fa; color: #fff; padding: 8px 20px; border-radius: 20px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(96,165,250,0.3); }
 
-/* Summary Bar & Seguimiento */
-.summary-bar { background: #DEE6EF; border-radius: 24px; padding: 20px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; margin-bottom: 24px; border: none; transition: all 0.3s ease; }
+/* Summary Bar & Actions Split */
+.dashboard-top-layout { display: flex; flex-direction: column; gap: 14px; margin-bottom: 24px; }
+.summary-bar { background: #DEE6EF; border-radius: 24px; padding: 20px 30px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 15px; margin-bottom: 0; border: none; transition: all 0.3s ease; }
 .summary-left { display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap; width: 100%; }
-.nav-buttons { display: flex; align-items: center; justify-content: center; gap: 15px; flex-wrap: wrap; width: 100%; }
+.action-bar { background: #F8FAFC; border: 2px solid #D6E8F7; border-radius: 20px; padding: 14px 20px; display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.action-controls { display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap; }
+.nav-buttons { display: flex; align-items: center; justify-content: flex-start; gap: 10px; flex-wrap: wrap; }
+.action-bar .action-btn { background: linear-gradient(180deg, #FFFFFF 0%, #F6FAFF 100%); color: #1B2A4A; border: 1.5px solid #97B7D1; border-radius: 14px; padding: 9px 14px; font-size: 12px; font-weight: 800; letter-spacing: .01em; box-shadow: 0 2px 6px rgba(15, 23, 42, 0.08); display: inline-flex; align-items: center; justify-content: space-between; gap: 10px; transition: all .2s ease; }
+.action-bar .action-btn:hover { background: #EEF4FA; border-color: #3E72A2; transform: translateY(-1px); box-shadow: 0 6px 14px rgba(30, 41, 59, 0.12); }
+.action-bar .action-btn .btn-icon { width: 20px; height: 20px; border-radius: 999px; background: #E2EDF8; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.action-bar .action-btn svg { width: 12px; height: 12px; fill: currentColor; flex-shrink: 0; }
+.action-bar .action-btn.action-btn-primary { background: #004581; border-color: #004581; color: #FFFFFF; }
+.action-bar .action-btn.action-btn-primary .btn-icon { background: rgba(255, 255, 255, 0.22); }
+.action-bar .action-btn.action-btn-primary:hover { background: #003360; border-color: #003360; }
+.action-search { width: 100%; max-width: 500px; display: flex; align-items: center; background: white; border: 2px solid #DEE6EF; border-radius: 15px; padding: 8px 16px; gap: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
+.action-search-input { border: none; outline: none; font-size: 14px; width: 100%; color: #1B2A4A; font-weight: 500; background: transparent; }
 
 @media (max-width: 1200px) {
   .summary-bar { padding: 12px 20px; gap: 10px; }
   .summary-left { gap: 8px; }
+  .action-bar { padding: 12px 16px; }
+  .action-search { max-width: 420px; }
 }
 
 @media (max-width: 768px) {
+  .dashboard-top-layout { gap: 10px; margin-bottom: 16px; }
   .summary-bar { border-radius: 20px; padding: 15px; gap: 12px; justify-content: center; flex-wrap: wrap; }
   .summary-left { flex-direction: column; width: 100%; gap: 10px; }
   .summary-label { width: 100%; text-align: center; margin-bottom: 5px; font-size: 14px; }
   .summary-v-divider, .summary-divider { display: none; }
   .status-chip { font-size: 11px; padding: 8px 14px; width: 100%; justify-content: center; }
-  .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 10px; margin-top: 5px; }
+  .action-bar { border-radius: 16px; padding: 12px; flex-direction: column; align-items: stretch; gap: 10px; }
+  .action-controls, .nav-buttons { width: 100%; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+  .action-search { max-width: 100%; }
   .nav-buttons .btn-pill { width: 100%; text-align: center; font-size: 12px; padding: 12px; }
 }
 .summary-label { font-size: 13px; font-weight: 800; color: #1B2A4A; margin-right: 5px; }
@@ -277,6 +305,15 @@ echo $OUTPUT->header();
 .config-label { font-size: 11px; font-weight: 700; color: #64748B; text-transform: uppercase; }
 .config-input, .config-select { padding: 10px; border: 1px solid #E2E8F0; border-radius: 8px; font-size: 13px; width: 100%; box-sizing: border-box; }
 .config-help { font-size: 11px; color: #94A3B8; margin-top: 2px; }
+.config-advanced-wrap { border: 1px dashed #CBD5E1; border-radius: 12px; padding: 10px; background: #F8FAFC; }
+.config-advanced-toggle { width: 100%; border: 1px solid #CBD5E1; background: #FFFFFF; color: #334155; border-radius: 10px; padding: 10px 12px; font-size: 12px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.config-advanced-toggle:hover { background: #F1F5F9; }
+.config-advanced-toggle .caret { transition: transform .2s ease; }
+.config-advanced-toggle.open .caret { transform: rotate(180deg); }
+.config-advanced-panel { display: none; margin-top: 10px; }
+.config-advanced-panel.open { display: block; }
+.config-warning { border-radius: 10px; padding: 10px 12px; text-align: left; font-size: 12px; line-height: 1.45; margin-bottom: 10px; border: 1px solid #FECACA; background: #FEF2F2; color: #991B1B; }
+.config-warning.info { border-color: #BFDBFE; background: #EFF6FF; color: #1E40AF; }
 .btn-config-gear { background: #F1F5F9; border: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s; }
 .btn-config-gear:hover { background: #E2E8F0; color: var(--blue); }
 @keyframes spin { to { transform: rotate(360deg); } }
@@ -303,7 +340,7 @@ echo $OUTPUT->header();
             <div class="lang-item" id="lang-gl" onclick="changeLang('gl')">Galego</div>
           </div>
        </div>
-       <?php if (has_capability('moodle/course:manageactivities', $context)): ?>
+       <?php if (has_capability('moodle/site:config', $systemcontext)): ?>
        <button class="btn-config-gear" title="Configuración de IA" onclick="openConfigModal()">
           <svg viewBox="0 0 24 24" style="fill:currentColor; width:20px;height:20px;"><path d="M12,15.5A3.5,3.5 0 0,1 8.5,12A3.5,3.5 0 0,1 12,8.5A3.5,3.5 0 0,1 15.5,12A3.5,3.5 0 0,1 12,15.5M19.43,12.97C19.47,12.65 19.5,12.33 19.5,12C19.5,11.67 19.47,11.35 19.43,11.03L21.54,9.37C21.73,9.22 21.78,8.95 21.66,8.73L19.66,5.27C19.54,5.05 19.27,4.96 19.05,5.05L16.56,6.05C16.04,5.66 15.47,5.32 14.87,5.07L14.5,2.42C14.46,2.18 14.25,2 14,2H10C9.75,2 9.54,2.18 9.5,2.42L9.13,5.07C8.53,5.32 7.96,5.66 7.44,6.05L4.95,5.05C4.73,4.96 4.46,5.05 4.34,5.27L2.34,8.73C2.21,8.95 2.27,9.22 2.46,9.37L4.57,11.03C4.53,11.35 4.5,11.67 4.5,12C4.5,11.67 4.53,11.35 4.57,11.03L2.46,14.63C2.27,14.78 2.21,15.05 2.34,15.27L4.34,18.73C4.46,18.95 4.73,19.03 4.95,18.95L7.44,17.95C7.96,18.34 8.53,18.68 9.13,18.93L9.5,21.58C9.54,21.82 9.75,22 10,22H14C14.25,22 14.46,21.82 14.5,21.58L14.87,18.93C15.47,18.68 16.04,18.34 16.56,17.95L19.05,18.95C19.27,19.03 19.54,18.95 19.66,18.73L21.66,15.27C21.78,15.05 21.73,14.78 21.54,14.63L19.43,12.97Z"/></svg>
        </button>
@@ -314,33 +351,40 @@ echo $OUTPUT->header();
     </div>
   </header>
 
-  <!-- Summary Bar -->
-  <div class="summary-bar">
-    <div class="summary-left">
-      <span class="summary-label" data-i18n="filters.label">Seguimiento activo:</span>
-      <div class="status-chip pri" onclick="setFilter('crit')" id="chip-pri"></div>
-      <div class="status-chip aten" onclick="setFilter('aten')" id="chip-amb"></div>
-      <div class="status-chip norm" onclick="setFilter('norm')" id="chip-grn"></div>
-      <div class="status-chip nodata" onclick="setFilter('none')" id="chip-nod"></div>
+  <div class="dashboard-top-layout">
+    <div class="action-bar">
+      <div class="action-controls nav-buttons">
+        <button class="btn-pill action-btn" onclick="location.reload()">
+          <span>Volver al panel</span>
+          <span class="btn-icon">
+            <svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg>
+          </span>
+        </button>
+        <button class="btn-pill action-btn action-btn-primary" onclick="openSurveyModal()" data-i18n="nav.survey">
+          <span>Carga Formulario Estudiantil</span>
+          <span class="btn-icon">
+            <svg viewBox="0 0 16 16"><path fill-rule="evenodd" d="M1 8a.5.5 0 0 1 .5-.5h11.793l-3.147-3.146a.5.5 0 0 1 .708-.708l4 4a.5.5 0 0 1 0 .708l-4 4a.5.5 0 0 1-.708-.708L13.293 8.5H1.5A.5.5 0 0 1 1 8"/></svg>
+          </span>
+        </button>
+      </div>
+      <div class="action-search">
+        <svg viewBox="0 0 24 24" style="width:20px; height:20px; fill:#4f46e5; flex-shrink:0;"><path d="M15.5,14H14.71L14.43,13.73C15.41,12.59 16,11.11 16,9.5A6.5,6.5 0 0,0 9.5,3A6.5,6.5 0 0,0 3,9.5A6.5,6.5 0 0,0 9.5,16C11.11,16 12.59,15.41 13.73,14.43L14,14.71V15.5L19,20.5L20.5,19L15.5,14M9.5,14C7.01,14 5,11.99 5,9.5C5,7.01 7.01,5 9.5,5C11.99,5 14,7.01 14,9.5C14,11.99 11.99,14 9.5,14Z"/></svg>
+        <input type="text" id="studentSearch" class="action-search-input" data-i18n-attr="placeholder:search.placeholder" placeholder="Escribe el nombre del estudiante para filtrar rápida..." oninput="searchTerm=this.value; render();">
+      </div>
     </div>
-    
 
-
-    <div class="nav-buttons">
-      <button class="btn-pill" onclick="location.reload()" data-i18n="nav.dashboard">Dashboard</button>
-      <button class="btn-pill" onclick="openSurveyModal()" data-i18n="nav.survey">Carga Formulario Estudiantil</button>
+    <!-- Summary Bar -->
+    <div class="summary-bar">
+      <div class="summary-left">
+        <span class="summary-label" data-i18n="filters.label">Seguimiento activo:</span>
+        <div class="status-chip pri" onclick="setFilter('crit')" id="chip-pri"></div>
+        <div class="status-chip aten" onclick="setFilter('aten')" id="chip-amb"></div>
+        <div class="status-chip norm" onclick="setFilter('norm')" id="chip-grn"></div>
+        <div class="status-chip nodata" onclick="setFilter('none')" id="chip-nod"></div>
+      </div>
     </div>
   </div>
   
-  <!-- Robust Filtering Area (New) -->
-  <div class="filters-area" style="display:flex; justify-content:center; align-items:center; gap:20px; margin-bottom:20px; margin-top: -10px;">
-    <div style="width: 100%; max-width: 500px; display:flex; align-items:center; background:white; border:2px solid #DEE6EF; border-radius:15px; padding:8px 16px; gap:10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1);">
-      <svg viewBox="0 0 24 24" style="width:20px; height:20px; fill:#4f46e5;"><path d="M15.5,14H14.71L14.43,13.73C15.41,12.59 16,11.11 16,9.5A6.5,6.5 0 0,0 9.5,3A6.5,6.5 0 0,0 3,9.5A6.5,6.5 0 0,0 9.5,16C11.11,16 12.59,15.41 13.73,14.43L14,14.71V15.5L19,20.5L20.5,19L15.5,14M9.5,14C7.01,14 5,11.99 5,9.5C5,7.01 7.01,5 9.5,5C11.99,5 14,7.01 14,9.5C14,11.99 11.99,14 9.5,14Z"/></svg>
-      <input type="text" id="studentSearch" data-i18n-attr="placeholder:search.placeholder" placeholder="Escribe el nombre del estudiante para filtrar rápida..." style="border:none; outline:none; font-size:14px; width:100%; color:#1B2A4A; font-weight: 500;" oninput="searchTerm=this.value; render();">
-    </div>
-  </div>
-
-
   <!-- Table Core -->
   <div class="table-container">
     <div class="uni-table-header">
@@ -369,24 +413,36 @@ echo $OUTPUT->header();
         <div class="config-group">
           <label class="config-label" data-i18n="config_modal.provider">Proveedor de IA</label>
           <select id="config-provider" class="config-select">
-            <option value="google" <?php echo (isset($config) && $config->ai_provider === 'google') ? 'selected' : ''; ?>>Google Gemini</option>
-            <option value="openai" <?php echo (isset($config) && $config->ai_provider === 'openai') ? 'selected' : ''; ?>>OpenAI</option>
-            <option value="claude" <?php echo (isset($config) && $config->ai_provider === 'claude') ? 'selected' : ''; ?>>Anthropic Claude</option>
-            <option value="custom" <?php echo (isset($config) && $config->ai_provider === 'custom') ? 'selected' : ''; ?>>Custom</option>
+            <option value="gemini" <?php echo ($normalizedprovider === 'gemini') ? 'selected' : ''; ?>>Google Gemini</option>
+            <option value="openai" <?php echo ($normalizedprovider === 'openai') ? 'selected' : ''; ?>>OpenAI</option>
+            <option value="anthropic" <?php echo ($normalizedprovider === 'anthropic') ? 'selected' : ''; ?>>Anthropic Claude</option>
+            <option value="deepseek" <?php echo ($normalizedprovider === 'deepseek') ? 'selected' : ''; ?>>DeepSeek</option>
+            <option value="custom" <?php echo ($normalizedprovider === 'custom') ? 'selected' : ''; ?>>Custom</option>
           </select>
         </div>
         <div class="config-group">
           <label class="config-label" data-i18n="config_modal.key">API Key</label>
-          <input type="password" id="config-key" class="config-input" placeholder="sk-..." value="<?php echo isset($config) && isset($config->api_key) ? s($config->api_key) : ''; ?>">
+          <input type="password" id="config-key" class="config-input" placeholder="sk-..." value="">
         </div>
         <div class="config-group">
           <label class="config-label" data-i18n="config_modal.model">Modelo Específico</label>
           <input type="text" id="config-model" class="config-input" placeholder="gemini-1.5-pro" value="<?php echo isset($config) && isset($config->ai_model) ? s($config->ai_model) : ''; ?>">
         </div>
-        <div class="config-group">
-          <label class="config-label" data-i18n="config_modal.base_url">Base URL (Opcional)</label>
-          <input type="text" id="config-baseurl" class="config-input" placeholder="https://..." value="<?php echo isset($config) && isset($config->ai_base_url) ? s($config->ai_base_url) : ''; ?>">
-          <div class="config-help" data-i18n="config_modal.help_url">Solo para proveedores personalizados o modelos locales.</div>
+        <div class="config-advanced-wrap">
+          <button type="button" id="baseUrlToggleBtn" class="config-advanced-toggle" onclick="toggleAdvancedBaseUrl()">
+            <span id="baseUrlToggleLabel">Mostrar opción avanzada: Base URL</span>
+            <span class="caret">▾</span>
+          </button>
+          <div id="baseUrlPanel" class="config-advanced-panel">
+            <div id="baseUrlWarning" class="config-warning">
+              Este campo solo se debe usar con proveedor <strong>Custom</strong>.
+            </div>
+            <div class="config-group">
+              <label class="config-label" data-i18n="config_modal.base_url">Base URL (Opcional)</label>
+              <input type="text" id="config-baseurl" class="config-input" placeholder="https://..." value="<?php echo isset($config) && isset($config->ai_base_url) ? s($config->ai_base_url) : ''; ?>">
+              <div class="config-help" data-i18n="config_modal.help_url">Solo para proveedores personalizados o modelos locales.</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="modal-actions">
@@ -425,7 +481,7 @@ echo $OUTPUT->header();
 
 <script>
 /* ── Lógica Consolidada (Zero Cache) ── */
-const UNIMAS_DATA = <?php echo json_encode($dashboard_data); ?>;
+const UNIMAS_DATA = <?php echo json_encode($dashboard_data, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT); ?>;
 let currentData = UNIMAS_DATA;
 // --- UI State ---
 let activeFilter = 'all';
@@ -495,6 +551,15 @@ function syncUI() {
         const langCode = el.id.replace('lang-', '');
         el.classList.toggle('active', langCode === currentLang);
     });
+
+    // Keep dynamic configuration helper texts in sync with current language.
+    if (typeof updateBaseUrlUI === 'function') {
+        updateBaseUrlUI();
+    }
+    if (typeof setAdvancedBaseUrlOpen === 'function') {
+        const panel = document.getElementById('baseUrlPanel');
+        setAdvancedBaseUrlOpen(!!(panel && panel.classList.contains('open')));
+    }
 }
 
 function _t(path) {
@@ -575,6 +640,32 @@ function sparkline(hist) {
   }).join('');
 }
 
+function escapeHtml(value) {
+  if (value === null || value === undefined) return '';
+  return String(value)
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#39;');
+}
+
+function formatAiReport(report) {
+  return String(report || '')
+    .split(/\r?\n/)
+    .map(line => {
+      const headingMatch = line.match(/^###\s+(.*)$/);
+      if (headingMatch) {
+        return `<div style="font-weight:700; color:#1e293b; margin-top:12px; border-bottom:1px solid #E2E8F0; padding-bottom:4px; margin-bottom:8px;">${escapeHtml(headingMatch[1])}</div>`;
+      }
+      if (!line.trim()) {
+        return '<div style="height:8px;"></div>';
+      }
+      return `<div>${escapeHtml(line)}</div>`;
+    })
+    .join('');
+}
+
 function render() {
   const tbody = document.getElementById('tbody');
   const rows = currentData.students
@@ -587,13 +678,15 @@ function render() {
     const isExpanded = (expandedId === s.id);
     const deltaIcon = s.delta > 0 ? `<span class="delta up">▲ +${s.delta.toFixed(2)}</span>` : (s.delta < 0 ? `<span class="delta dn">▼ ${s.delta.toFixed(2)}</span>` : '<span class="delta">— 0.00</span>');
     const aiRec = (currentData.ai && currentData.ai.recommendations) ? currentData.ai.recommendations.find(r => String(r.uid) === String(s.uid)) : null;
-    const aiSummary = aiRec ? aiRec.summary : '<span style="color:#94A3B8; font-style:italic;">Pendiente análisis</span>';
+    const aiSummary = (aiRec && aiRec.summary)
+      ? `<span>${escapeHtml(aiRec.summary)}</span>`
+      : '<span style="color:#94A3B8; font-style:italic;">Pendiente análisis</span>';
 
     html += `
     <div class="uni-student-row ${isExpanded ? 'active' : ''}">
       <div style="display:flex; flex-direction:column; justify-content:center;">
-        <span style="font-weight:700; color:#1E293B;">${s.name}</span>
-        <span style="font-size:11px; color:#94A3B8;">${s.id}</span>
+        <span style="font-weight:700; color:#1E293B;">${escapeHtml(s.name)}</span>
+        <span style="font-size:11px; color:#94A3B8;">${escapeHtml(s.id)}</span>
       </div>
       <div class="cell-center" data-label="${_t('table.is')}">
         <div class="is-bar-wrap">
@@ -648,11 +741,12 @@ function render() {
                     };
                     return `<div style="display:flex; flex-direction:column; gap:12px;">
                       ${Object.entries(survey).map(([q, a]) => {
-                        const tKey = qMap[q.trim()];
-                        const translatedQ = tKey ? _t(tKey) : q;
+                        const questionText = String(q || '');
+                        const tKey = qMap[questionText.trim()];
+                        const translatedQ = tKey ? _t(tKey) : questionText;
                         return `<div>
-                          <div style="font-weight:800; color:#1B2A4A; margin-bottom:2px;">${translatedQ}</div>
-                          <div style="background:#F8FAFC; padding:8px 12px; border-radius:12px; border-left:3px solid #004581;">${a}</div>
+                          <div style="font-weight:800; color:#1B2A4A; margin-bottom:2px;">${escapeHtml(translatedQ)}</div>
+                          <div style="background:#F8FAFC; padding:8px 12px; border-radius:12px; border-left:3px solid #004581;">${escapeHtml(a)}</div>
                         </div>`;
                       }).join('')}
                     </div>`;
@@ -661,7 +755,7 @@ function render() {
                       ${s.ctx.split(' | ').map(part => `
                         <div style="display:flex; align-items:flex-start; gap:8px;">
                           <span style="color:#004581; margin-top:3px;">●</span>
-                          <span>${part}</span>
+                          <span>${escapeHtml(part)}</span>
                         </div>`).join('')}
                     </div>`;
                   }
@@ -693,7 +787,7 @@ function render() {
                   </div>`;
                 }
                 if (aiRec && aiRec.full_report) {
-                  return aiRec.full_report.replace(/### (.*)/g, '<div style="font-weight:700; color:#1e293b; margin-top:12px; border-bottom:1px solid #E2E8F0; padding-bottom:4px; margin-bottom:8px;">$1</div>');
+                  return formatAiReport(aiRec.full_report);
                 }
                 return `<div style="text-align:center; padding:10px;">
                   <p style="margin-bottom:15px; font-size:12px; color:#64748B;">${_t('detail_panel.ai_prompt_manual')}</p>
@@ -725,7 +819,7 @@ function render() {
                   <option value="Derivado a bienestar" ${s.action === 'Derivado a bienestar' ? 'selected' : ''}>${_t('followup_form.action_welfare')}</option>
                   <option value="Otro" ${s.action === 'Otro' ? 'selected' : ''}>${_t('followup_form.action_other')}</option>
                 </select>
-                <textarea class="action-note" placeholder="${_t('followup_form.notes_placeholder')}">${s.note || ''}</textarea>
+                <textarea class="action-note" placeholder="${_t('followup_form.notes_placeholder')}">${escapeHtml(s.note || '')}</textarea>
                 <button class="save-btn" onclick="saveFollowup('${s.uid}', this)">${_t('followup_form.save_btn')}</button>
               </div>
             </div>
@@ -845,15 +939,59 @@ function closeSurveyModal() {
 
 /* AI Configuration Functions */
 function openConfigModal() {
-    document.getElementById('config-provider').value = currentData.config.ai_provider || 'gemini';
+    const provider = currentData.config.ai_provider || 'gemini';
+    document.getElementById('config-provider').value = provider;
     document.getElementById('config-model').value = currentData.config.ai_model || 'gemini-1.5-flash';
     document.getElementById('config-baseurl').value = currentData.config.ai_base_url || '';
     document.getElementById('config-key').value = ''; // Don't show existing key for security
+    setAdvancedBaseUrlOpen(provider === 'custom' || !!(currentData.config.ai_base_url || ''));
+    updateBaseUrlUI();
     document.getElementById('configModal').style.display = 'flex';
 }
 
 function closeConfigModal() {
     document.getElementById('configModal').style.display = 'none';
+}
+
+function getConfigModalText(key, fallback) {
+    const value = _t(key);
+    return (value && value !== key) ? value : fallback;
+}
+
+function setAdvancedBaseUrlOpen(isOpen) {
+    const panel = document.getElementById('baseUrlPanel');
+    const toggleBtn = document.getElementById('baseUrlToggleBtn');
+    const toggleLabel = document.getElementById('baseUrlToggleLabel');
+    if (!panel || !toggleBtn || !toggleLabel) return;
+
+    panel.classList.toggle('open', !!isOpen);
+    toggleBtn.classList.toggle('open', !!isOpen);
+    toggleLabel.textContent = !!isOpen
+        ? getConfigModalText('config_modal.advanced_hide', 'Ocultar opción avanzada: Base URL')
+        : getConfigModalText('config_modal.advanced_show', 'Mostrar opción avanzada: Base URL');
+}
+
+function toggleAdvancedBaseUrl() {
+    const panel = document.getElementById('baseUrlPanel');
+    if (!panel) return;
+    setAdvancedBaseUrlOpen(!panel.classList.contains('open'));
+    updateBaseUrlUI();
+}
+
+function updateBaseUrlUI() {
+    const providerEl = document.getElementById('config-provider');
+    const baseUrlEl = document.getElementById('config-baseurl');
+    const warningEl = document.getElementById('baseUrlWarning');
+    if (!providerEl || !baseUrlEl || !warningEl) return;
+
+    const isCustom = providerEl.value === 'custom';
+    baseUrlEl.disabled = !isCustom;
+    baseUrlEl.placeholder = isCustom ? 'https://tu-endpoint/api' : 'No usar para proveedores estándar';
+
+    warningEl.classList.toggle('info', isCustom);
+    warningEl.innerHTML = isCustom
+        ? getConfigModalText('config_modal.baseurl_custom_hint', 'Proveedor Custom seleccionado: aquí sí debes indicar la Base URL completa del endpoint.')
+        : getConfigModalText('config_modal.baseurl_warning', 'Advertencia: este campo solo debe usarse con proveedor Custom. Si usas OpenAI/Gemini/Anthropic/DeepSeek, déjalo vacío.');
 }
 
 async function generateStudentAI(uid, refresh = false) {
@@ -923,7 +1061,15 @@ async function saveAIConfig() {
     const provider = document.getElementById('config-provider').value;
     const key = document.getElementById('config-key').value;
     const model = document.getElementById('config-model').value;
-    const baseurl = document.getElementById('config-baseurl').value;
+    let baseurl = (document.getElementById('config-baseurl').value || '').trim();
+
+    if (provider !== 'custom') {
+        // Prevent accidental endpoint overrides on standard providers.
+        baseurl = '';
+    } else if (!baseurl) {
+        alert('Para el proveedor Custom debes indicar una Base URL.');
+        return;
+    }
 
     const formData = new FormData();
     formData.append('action', 'save_ai_config');
@@ -939,7 +1085,14 @@ async function saveAIConfig() {
             method: 'POST',
             body: formData
         });
-        const result = await response.json();
+        const raw = await response.text();
+        let result = null;
+        try {
+            result = JSON.parse(raw);
+        } catch (_) {
+            const msg = (raw || '').slice(0, 300).replace(/\s+/g, ' ').trim();
+            throw new Error(msg || `Respuesta no JSON (HTTP ${response.status})`);
+        }
         if (result.status === 'success') {
             alert('Configuración guardada correctamente. Recargando panel...');
             location.reload();
@@ -947,8 +1100,8 @@ async function saveAIConfig() {
             alert('Error: ' + result.message);
         }
     } catch (e) {
-        console.error(e);
-        alert('Error al guardar la configuración.');
+        console.error('saveAIConfig failed:', e);
+        alert('Error al guardar la configuración. ' + (e?.message ? `Detalle: ${e.message}` : ''));
     }
 }
 
@@ -1020,16 +1173,29 @@ function processExcel() {
 
             if (Object.keys(surveyData).length === 0) continue;
 
-            let foundStudent = students.find(s => normalize(s.name) === excelName);
-            if (!foundStudent) {
-                foundStudent = students.find(s => s.email && normalize(s.email) === excelEmail);
+            const studentByEmail = excelEmail
+                ? students.find(s => s.email && normalize(s.email) === excelEmail)
+                : null;
+            const studentByName = excelName
+                ? students.find(s => normalize(s.name) === excelName)
+                : null;
+
+            // If email and name point to different users, do not update automatically.
+            const displayName = escapeHtml(row[1] || '');
+
+            if (studentByEmail && studentByName && String(studentByEmail.uid) !== String(studentByName.uid)) {
+                previewHtml += `<div class="match-row"><span>${displayName}</span> <span class="msg-err">⚠ Conflicto nombre/correo</span></div>`;
+                continue;
             }
+
+            const foundStudent = studentByEmail || studentByName;
+            const matchSource = studentByEmail ? 'correo' : 'nombre';
 
             if (foundStudent) {
                 matchedUpdates.push({ userid: foundStudent.uid, context: JSON.stringify(surveyData) });
-                previewHtml += `<div class="match-row"><span>${row[1]}</span> <span class="msg-ok">✔ Match</span></div>`;
+                previewHtml += `<div class="match-row"><span>${displayName}</span> <span class="msg-ok">✔ Match (${matchSource})</span></div>`;
             } else {
-                previewHtml += `<div class="match-row"><span>${row[1]}</span> <span class="msg-err">✘ No encontrado</span></div>`;
+                previewHtml += `<div class="match-row"><span>${displayName}</span> <span class="msg-err">✘ No encontrado</span></div>`;
             }
         }
 
@@ -1083,6 +1249,12 @@ function confirmAndUpload() {
 
 // Init
 document.addEventListener('DOMContentLoaded', () => {
+  const providerEl = document.getElementById('config-provider');
+  if (providerEl) {
+    providerEl.addEventListener('change', updateBaseUrlUI);
+  }
+  setAdvancedBaseUrlOpen(false);
+  updateBaseUrlUI();
   loadTranslations(); // Load JSON on startup (calls syncUI + render internally)
 });
 </script>

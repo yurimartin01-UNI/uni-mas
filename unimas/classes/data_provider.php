@@ -314,7 +314,7 @@ class data_provider {
         $students = get_enrolled_users($context, 'moodle/course:participate', 0, 'u.id, u.firstname, u.lastname, u.email, u.suspended, u.deleted, u.username');
         
         if (empty($students)) {
-            $sql = "SELECT u.id, u.firstname, u.lastname, u.email, u.username
+            $sql = "SELECT u.id, u.firstname, u.lastname, u.email, u.username, u.suspended, u.deleted
                     FROM {user} u 
                     JOIN {user_enrolments} ue ON ue.userid = u.id 
                     JOIN {enrol} e ON e.id = ue.enrolid 
@@ -324,12 +324,16 @@ class data_provider {
 
         // Final filter: Exclude site admins and non-student profiles
         return array_filter($students, function($u) use ($context) {
+            $username = isset($u->username) ? (string)$u->username : '';
+            $deleted = isset($u->deleted) ? (int)$u->deleted : 0;
+            $suspended = isset($u->suspended) ? (int)$u->suspended : 0;
+
             // Exclude common admin usernames or users with manager-level capabilities
-            if ($u->username === 'admin') return false;
+            if ($username === 'admin') return false;
             // Only include users who DO NOT have the capability to update the course (teachers/managers)
             if (has_capability('moodle/course:update', $context, $u->id)) return false;
             
-            return $u->deleted == 0 && $u->suspended == 0;
+            return $deleted === 0 && $suspended === 0;
         });
     }
 

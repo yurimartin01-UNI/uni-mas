@@ -10,6 +10,10 @@ defined('MOODLE_INTERNAL') || die();
  * After calling handle(), the script never continues (redirect dies).
  */
 class action_handler {
+    /**
+     * Canonical provider names accepted by backend.
+     */
+    private const ALLOWED_AI_PROVIDERS = ['gemini', 'openai', 'anthropic', 'deepseek', 'custom'];
 
     /**
      * Domains that are allowed as ai_base_url values.
@@ -50,6 +54,21 @@ class action_handler {
         }
 
         return false;
+    }
+
+    /**
+     * Normalize legacy/provider aliases to canonical names.
+     */
+    private static function normalize_ai_provider(string $provider): string {
+        $p = strtolower(trim($provider));
+        switch ($p) {
+            case 'google':
+                return 'gemini';
+            case 'claude':
+                return 'anthropic';
+            default:
+                return $p;
+        }
     }
 
     /**
@@ -204,22 +223,44 @@ class action_handler {
             redirect($base_url);
         }
 
-        foreach ($updates as $entry) {
-            if (!isset($entry->userid) || !isset($entry->context)) continue;
-            
-            $record = $DB->get_record('local_unimas_context', ['courseid' => $course_id, 'userid' => $entry->userid]);
-            if ($record) {
-                $record->context_text = $entry->context;
-                $record->timecreated = time();
-                $DB->update_record('local_unimas_context', $record);
-            } else {
-                $DB->insert_record('local_unimas_context', [
-                    'courseid' => $course_id,
-                    'userid' => $entry->userid,
-                    'context_text' => $entry->context,
-                    'timecreated' => time()
-                ]);
+        $transaction = $DB->start_delegated_transaction();
+        try {
+            foreach ($updates as $entry) {
+                if (!isset($entry->userid) || !isset($entry->context)) {
+                    continue;
+                }
+
+                $userid = (int)$entry->userid;
+                $contexttext = self::sanitize_context_text($entry->context);
+
+                $record = $DB->get_record('local_unimas_context', ['courseid' => $course_id, 'userid' => $userid]);
+                if ($record) {
+                    $record->context_text = $contexttext;
+                    $record->timecreated = time();
+                    $DB->update_record('local_unimas_context', $record);
+                } else {
+                    $DB->insert_record('local_unimas_context', [
+                        'courseid' => $course_id,
+                        'userid' => $userid,
+                        'context_text' => $contexttext,
+                        'timecreated' => time()
+                    ]);
+                }
             }
+
+            $transaction->allow_commit();
+        } catch (\Throwable $e) {
+            try {
+                $transaction->rollback($e);
+            } catch (\Throwable $ignored) {
+                // rollback() rethrows; ignore to return controlled AJAX error below.
+            }
+
+            if ($is_ajax) {
+                echo json_encode(['status' => 'error', 'message' => 'Error al guardar carga masiva de contexto.']);
+                die();
+            }
+            redirect($base_url);
         }
 
         if ($is_ajax) {
@@ -230,15 +271,39 @@ class action_handler {
     }
 
     /**
+     * Sanitize survey context payload before storing it in DB.
+     * Accepts either JSON object text or plain text.
+     */
+    private static function sanitize_context_text($rawcontext): string {
+        $contexttext = is_string($rawcontext) ? $rawcontext : json_encode($rawcontext);
+        if (!is_string($contexttext)) {
+            return '';
+        }
+
+        $decoded = json_decode($contexttext, true);
+        if (!is_array($decoded)) {
+            return clean_param($contexttext, PARAM_TEXT);
+        }
+
+        $sanitized = [];
+        foreach ($decoded as $question => $answer) {
+            $q = clean_param((string)$question, PARAM_TEXT);
+            $a = clean_param((string)$answer, PARAM_TEXT);
+            if ($q !== '' && $a !== '') {
+                $sanitized[$q] = $a;
+            }
+        }
+
+        return json_encode($sanitized, JSON_UNESCAPED_UNICODE);
+    }
+
+    /**
      * Save AI configuration settings from the dashboard.
      */
     private static function handle_save_ai_config(int $course_id, \moodle_url $base_url, bool $is_ajax): void {
-        global $USER;
-        
-        // Basic security check: user must be enrolled in the course as teacher/editingteacher
-        // or have site config access.
-        $context = \context_course::instance($course_id);
-        if (!has_capability('moodle/course:manageactivities', $context)) {
+        // Global plugin configuration must be restricted to site admins/config managers.
+        $systemcontext = \context_system::instance();
+        if (!has_capability('moodle/site:config', $systemcontext)) {
             if ($is_ajax) { echo json_encode(['status' => 'error', 'message' => 'No tienes permisos para cambiar la configuración.']); die(); }
             redirect($base_url);
         }
@@ -247,6 +312,21 @@ class action_handler {
         $apikey   = optional_param('api_key',      '', PARAM_RAW);
         $model    = optional_param('ai_model',     '', PARAM_TEXT);
         $baseurl  = optional_param('ai_base_url',  '', PARAM_URL);
+        $provider = self::normalize_ai_provider($provider);
+
+        if (!in_array($provider, self::ALLOWED_AI_PROVIDERS, true)) {
+            $msg = 'Proveedor de IA inválido.';
+            if ($is_ajax) { echo json_encode(['status' => 'error', 'message' => $msg]); die(); }
+            redirect($base_url);
+            return;
+        }
+
+        if ($provider === 'custom' && empty($baseurl)) {
+            $msg = 'Para proveedor custom debes indicar una Base URL.';
+            if ($is_ajax) { echo json_encode(['status' => 'error', 'message' => $msg]); die(); }
+            redirect($base_url);
+            return;
+        }
 
         // ── Domain whitelist: reject ai_base_url values pointing to untrusted hosts ──
         if (!self::validate_ai_url($baseurl)) {
@@ -259,7 +339,12 @@ class action_handler {
         if ($provider) set_config('ai_provider', $provider, 'local_unimas');
         if ($apikey)   set_config('api_key',      $apikey,   'local_unimas');
         if ($model)    set_config('ai_model',     $model,    'local_unimas');
-        if ($baseurl)  set_config('ai_base_url',  $baseurl,  'local_unimas');
+        if ($provider !== 'custom' && empty($baseurl)) {
+            // Prevent stale custom endpoint values when switching back to standard providers.
+            unset_config('ai_base_url', 'local_unimas');
+        } else if ($baseurl) {
+            set_config('ai_base_url',  $baseurl,  'local_unimas');
+        }
 
         // Clear AI cache for this course when settings change to force a new call with new config
         global $DB;

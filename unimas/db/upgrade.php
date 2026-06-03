@@ -162,5 +162,63 @@ function xmldb_local_unimas_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026051300, 'local', 'unimas');
     }
 
+    if ($oldversion < 2026060101) {
+        // Add missing foreign keys to enforce referential integrity.
+        // Safe for this environment because there is no legacy user/course data to clean.
+        $addforeignkey = function(xmldb_table $table, xmldb_key $key) use ($dbman): void {
+            if (!$dbman->table_exists($table)) {
+                return;
+            }
+
+            // Some Moodle versions do not expose key_exists(); use find_key_name when available.
+            if (method_exists($dbman, 'find_key_name')) {
+                $existing = $dbman->find_key_name($table, $key);
+                if (!empty($existing)) {
+                    return;
+                }
+            }
+
+            try {
+                $dbman->add_key($table, $key);
+            } catch (\Throwable $e) {
+                // Idempotency fallback: if key exists already, add_key can throw depending on DB/driver.
+                // Ignore duplicate-key style failures and continue upgrade.
+                $msg = strtolower($e->getMessage());
+                if (strpos($msg, 'exists') !== false || strpos($msg, 'duplicate') !== false) {
+                    return;
+                }
+                throw $e;
+            }
+        };
+
+        $table = new xmldb_table('local_unimas_indicators');
+        $key = new xmldb_key('courseid_fk', XMLDB_KEY_FOREIGN, ['courseid'], 'course', ['id']);
+        $addforeignkey($table, $key);
+        $key = new xmldb_key('userid_fk', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $addforeignkey($table, $key);
+
+        $table = new xmldb_table('local_unimas_actions');
+        $key = new xmldb_key('courseid_fk', XMLDB_KEY_FOREIGN, ['courseid'], 'course', ['id']);
+        $addforeignkey($table, $key);
+        $key = new xmldb_key('userid_fk', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $addforeignkey($table, $key);
+        $key = new xmldb_key('authorid_fk', XMLDB_KEY_FOREIGN, ['authorid'], 'user', ['id']);
+        $addforeignkey($table, $key);
+
+        $table = new xmldb_table('local_unimas_context');
+        $key = new xmldb_key('courseid_fk', XMLDB_KEY_FOREIGN, ['courseid'], 'course', ['id']);
+        $addforeignkey($table, $key);
+        $key = new xmldb_key('userid_fk', XMLDB_KEY_FOREIGN, ['userid'], 'user', ['id']);
+        $addforeignkey($table, $key);
+
+        $table = new xmldb_table('local_unimas_ai_cache');
+        $key = new xmldb_key('courseid_fk', XMLDB_KEY_FOREIGN, ['courseid'], 'course', ['id']);
+        $addforeignkey($table, $key);
+        $key = new xmldb_key('studentid_fk', XMLDB_KEY_FOREIGN, ['student_id'], 'user', ['id']);
+        $addforeignkey($table, $key);
+
+        upgrade_plugin_savepoint(true, 2026060101, 'local', 'unimas');
+    }
+
     return true;
 }
