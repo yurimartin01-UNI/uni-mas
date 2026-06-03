@@ -148,7 +148,8 @@ class data_provider {
             $no_info = ($i_r_raw === null);
             $i_r = $no_info ? 0 : $i_r_raw;
 
-            $is = (0.40 * $i_a) + (0.35 * $i_r) + (0.25 * $i_e);
+            // IS: Actividad Moodle (40%) + Entregas (35%) + Rendimiento (25%)
+            $is = (0.40 * $i_e) + (0.35 * $i_a) + (0.25 * $i_r);
             
             // Save it
             $record = new stdClass();
@@ -301,7 +302,7 @@ class data_provider {
             'hotPractice' => 'Cálculo de IS basado en definiciones operativas Uni_mas (14 días)',
             'hotLate' => 0,
             'patterns' => [
-                ['color' => '#6366f1', 'text' => "Métricas actualizadas según modelo 0/1", 'sub' => "Evaluando Entregas (40%), Rendimiento vs Grupo (35%) y Enganche 7/14 (25%).", 'pills' => [['cls' => 'sug-blue', 'txt' => 'Modelo OK']]]
+                ['color' => '#6366f1', 'text' => "Métricas actualizadas según modelo 0/1", 'sub' => "Evaluando Actividad/Enganche 7/14 (40%), Entregas (35%) y Rendimiento vs Grupo (25%).", 'pills' => [['cls' => 'sug-blue', 'txt' => 'Modelo OK']]]
             ]
         ];
     }

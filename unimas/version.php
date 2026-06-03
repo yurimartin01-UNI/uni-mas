@@ -8,7 +8,7 @@
 defined('MOODLE_INTERNAL') || die();
 
 $plugin->component = 'local_unimas';
-$plugin->version   = 2026060101;
+$plugin->version   = 2026060300;
 $plugin->requires  = 2022112800; // Moodle 4.1 (LTS) minimum
 $plugin->maturity  = MATURITY_BETA;
-$plugin->release   = '0.2.1';
+$plugin->release   = '0.2.2';

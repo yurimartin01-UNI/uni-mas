@@ -141,12 +141,11 @@ class ai_agent
     }
 
     private static function build_student_ai_payload(array $studentdata, int $courseid): array {
-        $uid = (int)($studentdata['uid'] ?? 0);
         $comps = is_array($studentdata['comps'] ?? null) ? $studentdata['comps'] : [];
         $ctxsignal = self::build_survey_signal($studentdata['ctx'] ?? null);
 
         return [
-            'sid' => 'S-' . $courseid . '-' . $uid,
+            'sid' => 'S1',
             'level' => (string)($studentdata['level'] ?? 'nodata'),
             'is' => isset($studentdata['is']) && is_numeric($studentdata['is']) ? round((float)$studentdata['is'], 2) : null,
             'delta' => isset($studentdata['delta']) && is_numeric($studentdata['delta']) ? round((float)$studentdata['delta'], 2) : 0.0,
@@ -336,6 +335,9 @@ $student_json
 ## 2. Interpretación contextual por patrón
 Complementa el análisis con la lectura del patrón observado. Usa los datos del formulario solo para enriquecer la interpretación.
 
+El IS se calcula como: IS = 0.40 × Actividad en Moodle + 0.35 × Entregas + 0.25 × Rendimiento académico.
+Correspondencia de indicadores: I_A = Entregas, I_R = Rendimiento académico, I_E = Actividad en Moodle.
+
 | Patrón | I_A | I_R | I_E | Lectura orientadora |
 |---|:---:|:---:|:---:|---|
 | **P1** | 0 | 0 | 0 | Posible desvinculación académica intensa o sostenida. Señal fuerte si persiste ≥ 2 periodos consecutivos. |
@@ -407,6 +409,9 @@ $student_context
 
 ## 2. Interpretación contextual por patrón
 Complementa el análisis con la lectura del patrón observado. Usa los datos del formulario solo para enriquecer la interpretación.
+
+El IS se calcula como: IS = 0.40 × Actividad en Moodle + 0.35 × Entregas + 0.25 × Rendimiento académico.
+Correspondencia de indicadores: I_A = Entregas, I_R = Rendimiento académico, I_E = Actividad en Moodle.
 
 | Patrón | I_A | I_R | I_E | Lectura orientadora |
 |---|:---:|:---:|:---:|---|

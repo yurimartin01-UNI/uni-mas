@@ -220,5 +220,14 @@ function xmldb_local_unimas_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2026060101, 'local', 'unimas');
     }
 
+    if ($oldversion < 2026060300) {
+        // The IS formula changed its weights. Drop cached snapshots so Moodle
+        // recalculates them on the next dashboard load with the new criteria.
+        $DB->delete_records('local_unimas_indicators');
+        $DB->delete_records('local_unimas_ai_cache');
+
+        upgrade_plugin_savepoint(true, 2026060300, 'local', 'unimas');
+    }
+
     return true;
 }
